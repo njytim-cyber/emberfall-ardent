@@ -1,0 +1,274 @@
+/* ============================================================
+   Emberfall — UI for cutscenes, ATB battle, and the spellbook menu.
+   (Base HUD / menu / loader styling lives in style.css.)
+   ============================================================ */
+
+/* ---------- Objective tracker + interaction prompt ---------- */
+#objective {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  max-width: 280px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid #e0b968;
+  border-radius: 8px;
+  padding: 10px 14px;
+  text-align: right;
+}
+#objective .obj-label { display: block; font-size: 0.7rem; letter-spacing: 0.15rem; color: #e0b968; }
+#objective .obj-text { font-size: 0.95rem; color: var(--ink); }
+
+#interact-prompt {
+  position: absolute;
+  bottom: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.7);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-size: 1rem;
+  color: #ffe0a0;
+  animation: pulse 1.4s infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 0.75; } 50% { opacity: 1; } }
+
+.hint-note { margin-top: 12px; font-size: 0.85rem; color: #9a8f78; line-height: 1.4; }
+
+/* ============================================================
+   Cutscene / dialogue box
+   ============================================================ */
+#cutscene {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: flex-end; justify-content: center;
+  cursor: pointer;
+}
+.cutscene-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.75));
+  pointer-events: none;
+}
+
+/* Cinematic letterbox bars (slide in each time a scene shows) */
+.cine-bar {
+  position: absolute; left: 0; right: 0;
+  height: 11vh; background: #000; pointer-events: none; z-index: 1;
+}
+.cine-bar.top { top: 0; animation: barTop 0.5s ease-out; }
+.cine-bar.bottom { bottom: 0; animation: barBottom 0.5s ease-out; }
+@keyframes barTop { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+@keyframes barBottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.cutscene-box {
+  position: relative;
+  width: min(880px, 92vw);
+  margin-bottom: 6vh;
+  display: flex;
+  gap: 18px;
+  background: linear-gradient(180deg, rgba(18,16,26,0.96), rgba(8,7,12,0.97));
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 24px;
+  box-shadow: 0 12px 50px rgba(0,0,0,0.6);
+}
+.cutscene-box[data-mood="hero"] { border-color: rgba(120,200,255,0.5); }
+.cutscene-box[data-mood="boss"] { border-color: rgba(220,80,80,0.6); background: linear-gradient(180deg, rgba(30,10,14,0.96), rgba(12,4,6,0.97)); }
+.cutscene-box[data-mood="dark"] { border-color: rgba(150,130,90,0.4); }
+
+.cutscene-portrait {
+  flex: 0 0 84px;
+  height: 84px;
+  font-size: 3rem;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.cutscene-body { flex: 1; }
+.cutscene-speaker { font-size: 1.05rem; font-weight: 700; color: #e0b968; margin-bottom: 6px; letter-spacing: 0.04rem; }
+.cutscene-box[data-mood="hero"] .cutscene-speaker { color: #7cc4ff; }
+.cutscene-box[data-mood="boss"] .cutscene-speaker { color: #ff7b6b; }
+.cutscene-text { font-size: 1.1rem; line-height: 1.5; color: var(--ink); min-height: 3em; }
+.cutscene-hint { margin-top: 10px; text-align: right; font-size: 0.8rem; color: #6f6858; }
+
+/* ============================================================
+   ATB Battle screen (retro JRPG)
+   ============================================================ */
+#battle {
+  position: fixed; inset: 0; z-index: 180;
+  display: flex; flex-direction: column;
+  font-family: var(--font);
+}
+.battle-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 20%, rgba(60,50,90,0.5), transparent 60%),
+    linear-gradient(180deg, #1a1730 0%, #241d38 45%, #3a2c42 46%, #2a2030 100%);
+}
+.battle-bg::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 46%;
+  background:
+    repeating-linear-gradient(90deg, rgba(0,0,0,0.15) 0 2px, transparent 2px 60px),
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0 2px, transparent 2px 40px);
+  transform: perspective(300px) rotateX(55deg);
+  transform-origin: bottom;
+  opacity: 0.4;
+}
+
+.battle-banner {
+  position: absolute; top: 42%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  font-size: 2.6rem; font-weight: 800; letter-spacing: 0.2rem;
+  color: #ffe0a0; text-shadow: 0 4px 20px rgba(0,0,0,0.8);
+  opacity: 0; pointer-events: none; transition: all 0.4s ease; z-index: 10;
+}
+.battle-banner.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+.battle-banner.defeat { color: #ff6b5b; }
+
+.battle-enemies {
+  position: relative; z-index: 2;
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  gap: 40px; padding-top: 40px;
+}
+.enemy-card {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 10px 16px; border-radius: 12px;
+  background: rgba(0,0,0,0.25); border: 1px solid transparent;
+  transition: transform 0.1s ease, opacity 0.4s ease;
+}
+.enemy-card.boss { transform: scale(1.35); }
+.enemy-card .enemy-sprite { font-size: 4rem; transition: transform 0.15s ease; }
+.enemy-card.boss .enemy-sprite { font-size: 6rem; }
+.enemy-card .enemy-sprite.lunge { transform: translateY(10px) scale(1.1); }
+.enemy-card.hit { animation: enemyHit 0.2s; }
+@keyframes enemyHit { 50% { transform: translateX(-8px); filter: brightness(2.2); } }
+.enemy-card.dead { opacity: 0; transform: scale(0.4) rotate(20deg); pointer-events: none; }
+.enemy-card.enraged .enemy-sprite { animation: enrage 0.5s infinite; }
+@keyframes enrage { 50% { filter: hue-rotate(-30deg) brightness(1.4); } }
+.enemy-name { font-size: 0.9rem; color: #e8e0d0; text-shadow: 0 1px 3px #000; }
+.ebar { width: 120px; height: 8px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden; }
+.ebar-fill { height: 100%; transition: width 0.3s ease; }
+.enemy-card.targetable { cursor: pointer; border-color: #ff5b4b; animation: pulse 0.8s infinite; }
+
+.battle-log {
+  position: relative; z-index: 3;
+  min-height: 70px; padding: 8px 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+}
+.blog-line {
+  font-size: 1rem; color: #f0e8d8;
+  background: rgba(0,0,0,0.45); padding: 4px 16px; border-radius: 6px;
+  animation: fadeUp 3.2s forwards;
+}
+.blog-line b { font-weight: 800; }
+
+.battle-bottom {
+  position: relative; z-index: 4;
+  display: flex; gap: 14px; padding: 14px;
+  align-items: stretch;
+}
+.battle-party { flex: 1; }
+.hero-status {
+  background: linear-gradient(180deg, rgba(20,30,60,0.9), rgba(10,16,36,0.95));
+  border: 2px solid #3a5a9a; border-radius: 10px; padding: 12px 16px;
+}
+.battle-party.shake { animation: shake 0.3s; }
+@keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.hs-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+.hs-name { font-weight: 700; color: #fff; }
+.hs-lv { margin-left: auto; color: #9ac5ff; font-size: 0.85rem; }
+.hs-lbl { width: 30px; font-size: 0.8rem; color: #bcd; font-weight: 700; }
+.hs-bar { flex: 1; height: 14px; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; overflow: hidden; }
+.hs-bar .hs-fill { height: 100%; transition: width 0.3s ease; }
+.hs-bar.hp .hs-fill { background: linear-gradient(180deg, #ff6b5b, #c0392b); }
+.hs-bar.mp .hs-fill { background: linear-gradient(180deg, #5aa9ff, #2471c9); }
+.hs-bar.atb .hs-fill { background: linear-gradient(180deg, #ffe070, #d4a017); }
+.hs-num { font-size: 0.8rem; color: #e8e0d0; min-width: 74px; text-align: right; }
+.qc-bar { display: flex; gap: 10px; margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); }
+.qc-slot { font-size: 0.8rem; color: #ccbbdd; }
+.qc-slot b { display: inline-block; min-width: 16px; text-align: center; color: #ffe0a0; background: rgba(255,255,255,0.1); border-radius: 4px; padding: 0 4px; }
+
+.battle-menu {
+  flex: 0 0 260px;
+  background: linear-gradient(180deg, rgba(20,20,30,0.94), rgba(8,8,14,0.96));
+  border: 2px solid var(--border); border-radius: 10px; padding: 12px;
+  display: flex; flex-direction: column; gap: 6px;
+  opacity: 0.4; pointer-events: none; transition: opacity 0.2s ease;
+}
+.battle-menu.open { opacity: 1; pointer-events: auto; }
+.menu-title { font-weight: 700; color: #e0b968; letter-spacing: 0.1rem; margin-bottom: 4px; }
+.menu-hint { font-size: 0.8rem; color: #9a8f78; }
+.menu-list { display: flex; flex-direction: column; gap: 5px; }
+.menu-btn {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 1rem; padding: 8px 12px; color: #f0e8d8;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px; cursor: pointer; box-shadow: none; letter-spacing: 0;
+  transition: background 0.1s ease, transform 0.1s ease;
+}
+.menu-btn:hover { background: rgba(224,185,104,0.25); transform: translateX(3px); }
+.menu-btn.disabled { opacity: 0.4; cursor: not-allowed; }
+.menu-btn.back { margin-top: auto; color: #bbb; }
+.menu-note { font-size: 0.8rem; color: #9ac5ff; }
+
+/* ============================================================
+   Spellbook / Inventory menu (press C)
+   ============================================================ */
+#game-menu {
+  position: fixed; inset: 0; z-index: 190;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(4,4,8,0.72);
+}
+.menu-panel {
+  width: min(880px, 94vw); max-height: 88vh; overflow: hidden;
+  background: linear-gradient(180deg, rgba(22,20,30,0.98), rgba(10,9,15,0.99));
+  border: 2px solid var(--border); border-radius: 14px;
+  display: flex; flex-direction: column;
+}
+.menu-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 22px; border-bottom: 1px solid var(--border); }
+.menu-head h2 { color: #e0b968; letter-spacing: 0.15rem; font-size: 1.3rem; }
+.menu-close { font-size: 0.9rem; padding: 8px 16px; }
+.menu-cols { display: flex; gap: 18px; padding: 20px; overflow-y: auto; }
+.menu-col { flex: 1; }
+.menu-col.inv-col { flex: 0 0 240px; }
+.menu-col h3 { color: #cbbfa8; font-size: 0.95rem; margin: 6px 0 10px; }
+.menu-col h3 small { color: #8a7f6a; font-weight: 400; font-size: 0.78rem; }
+
+.loadout-row { display: flex; gap: 10px; margin-bottom: 20px; }
+.loadout-slot {
+  flex: 1; text-align: center; padding: 12px 6px; cursor: pointer;
+  background: rgba(255,255,255,0.04); border: 2px solid rgba(255,255,255,0.12); border-radius: 10px;
+  transition: all 0.12s ease;
+}
+.loadout-slot.selected { border-color: #e0b968; background: rgba(224,185,104,0.15); box-shadow: 0 0 14px rgba(224,185,104,0.3); }
+.loadout-slot .lo-key { display: inline-block; font-weight: 800; color: #ffe0a0; background: rgba(0,0,0,0.4); border-radius: 4px; padding: 0 8px; }
+.loadout-slot .lo-icon { display: block; font-size: 1.9rem; margin: 6px 0 2px; }
+.loadout-slot .lo-name { font-size: 0.82rem; color: #d8d0c0; }
+
+.spellbook { display: flex; flex-direction: column; gap: 6px; }
+.spell-entry {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px; cursor: pointer;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px;
+  transition: all 0.12s ease;
+}
+.spell-entry:hover { background: rgba(224,185,104,0.18); transform: translateX(3px); }
+.spell-entry.equipped { border-color: rgba(224,185,104,0.5); }
+.spell-entry.clear { opacity: 0.75; }
+.se-icon { font-size: 1.7rem; flex: 0 0 34px; text-align: center; }
+.se-body { flex: 1; display: flex; flex-direction: column; }
+.se-name { font-weight: 700; color: #f0e8d8; }
+.se-name em { color: #e0b968; font-style: normal; font-size: 0.8rem; }
+.se-desc { font-size: 0.82rem; color: #9a8f78; }
+.se-cost { color: #5aa9ff; font-size: 0.85rem; }
+
+.inv-list, .hero-info { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.inv-item {
+  display: flex; justify-content: space-between; padding: 8px 12px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;
+  font-size: 0.92rem; color: #d8d0c0;
+}
+.inv-item.gold span:last-child { color: #ffd970; font-weight: 700; }
+
+/* Battle floating numbers reuse .float-dmg from style.css; add MP colour */
+.float-dmg.mp { color: #5aa9ff; }

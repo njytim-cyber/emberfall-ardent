@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Emberfall — City of Ardent</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <link rel="stylesheet" href="./css/ui.css" />
+  <link rel="stylesheet" href="./css/shop.css" />
+
+  <!-- TEMP: surface any JS error on screen so it's visible without the console -->
+  <script>
+    function __showErr(msg) {
+      let d = document.getElementById('err-overlay');
+      if (!d) {
+        d = document.createElement('div');
+        d.id = 'err-overlay';
+        d.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#1a0000;color:#ff9b9b;'
+          + 'font:13px/1.5 monospace;padding:24px;white-space:pre-wrap;overflow:auto';
+        (document.body || document.documentElement).appendChild(d);
+      }
+      d.textContent += msg + '\n\n';
+    }
+    window.addEventListener('error', (e) => {
+      __showErr('⛔ ERROR: ' + e.message + '\n   at ' + (e.filename || '?') + ':' + (e.lineno || '?') + ':' + (e.colno || '?')
+        + (e.error && e.error.stack ? '\n' + e.error.stack : ''));
+    });
+    window.addEventListener('unhandledrejection', (e) => {
+      const r = e.reason;
+      __showErr('⛔ PROMISE REJECTION: ' + (r && (r.stack || r.message) ? (r.stack || r.message) : r));
+    });
+  </script>
+
+  <!-- Three.js loaded via import map (no build step needed) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <!-- Loading screen -->
+  <div id="loading-screen">
+    <div class="loader-content">
+      <h1>EMBERFALL</h1>
+      <p class="subtitle">City of Ardent · A Cyberpunk RPG</p>
+      <div class="loader-bar"><div class="loader-fill"></div></div>
+      <p class="loader-text">Booting the city…</p>
+    </div>
+  </div>
+
+  <!-- Start menu -->
+  <div id="start-menu" class="hidden">
+    <div class="menu-content">
+      <h1>EMBERFALL</h1>
+      <p class="subtitle">Ardent belongs to Helix. Tonight, Emberfall takes it back. You are Cade — bring down President Vance.</p>
+      <button id="start-btn">Jack In</button>
+      <div class="controls-hint">
+        <h3>Controls</h3>
+        <ul>
+          <li><b>W A S D</b> — Move</li>
+          <li><b>Mouse</b> — Look around</li>
+          <li><b>Left Click / Space</b> — Melee strike</li>
+          <li><b>, . /</b> — Fire equipped abilities</li>
+          <li><b>Right Click</b> — Lock on / off</li>
+          <li><b>R</b> — Limit Break (when full)</li>
+          <li><b>Ctrl / Q</b> — Dash</li>
+          <li><b>Shift</b> — Sprint</li>
+          <li><b>E</b> — Talk / trade</li>
+          <li><b>C</b> — Abilities &amp; gear</li>
+          <li><b>Esc</b> — Release mouse</li>
+        </ul>
+        <p class="hint-note"><b>Fight down Vance Avenue</b> to the plaza and take down President Vance. Doc's stall (<b>$</b>) sells gear along the way.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- In-game HUD -->
+  <div id="hud" class="hidden">
+    <div class="stat-bars">
+      <div class="bar-group">
+        <span class="bar-label">HP</span>
+        <div class="bar health"><div id="health-fill" class="bar-fill"></div><span id="health-text" class="bar-text"></span></div>
+      </div>
+      <div class="bar-group">
+        <span class="bar-label">EN</span>
+        <div class="bar mana"><div id="mana-fill" class="bar-fill"></div><span id="mana-text" class="bar-text"></span></div>
+      </div>
+      <div class="bar-group xp-group">
+        <span class="bar-label">XP</span>
+        <div class="bar xp"><div id="xp-fill" class="bar-fill"></div><span id="level-text" class="bar-text"></span></div>
+      </div>
+    </div>
+
+    <div id="spell-bar"></div>
+
+    <div id="target-panel" class="hidden">
+      <span id="target-name"></span>
+      <div class="bar enemy-hp"><div id="target-hp-fill" class="bar-fill"></div></div>
+    </div>
+
+    <div id="message-log"></div>
+
+    <div id="crosshair">+</div>
+  </div>
+
+  <!-- Death screen -->
+  <div id="death-screen" class="hidden">
+    <div class="menu-content">
+      <h1 class="fallen">FLATLINED</h1>
+      <p class="subtitle">Emberfall lost an operative. Reboot from the last safe node.</p>
+      <button id="respawn-btn">Reboot</button>
+    </div>
+  </div>
+
+  <canvas id="game-canvas"></canvas>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

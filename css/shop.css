@@ -1,0 +1,192 @@
+/* ============================================================
+   Emberfall — Act 3 UI: shop, floating enemy health bars,
+   and the frozen status overlay.
+   ============================================================ */
+
+/* ---------- Shop ---------- */
+#shop {
+  position: fixed; inset: 0; z-index: 190;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(4, 4, 8, 0.72);
+}
+.shop-panel {
+  width: min(720px, 94vw); max-height: 88vh; overflow: hidden;
+  background: linear-gradient(180deg, rgba(30, 24, 16, 0.98), rgba(14, 11, 7, 0.99));
+  border: 2px solid var(--border); border-radius: 14px;
+  display: flex; flex-direction: column;
+}
+.shop-head {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px 22px; border-bottom: 1px solid var(--border);
+}
+.shop-head h2 { color: #e0b968; letter-spacing: 0.12rem; font-size: 1.2rem; flex: 1; }
+.shop-gold { color: #ffd970; font-weight: 700; font-size: 1.05rem; }
+.shop-close { font-size: 0.9rem; padding: 8px 14px; }
+.shop-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+.shop-note { padding: 0 20px 16px; font-size: 0.82rem; color: #9a8f78; }
+
+.shop-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 14px; border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.shop-item.soldout { opacity: 0.5; }
+.shop-icon { font-size: 1.9rem; flex: 0 0 40px; text-align: center; }
+.shop-body { flex: 1; display: flex; flex-direction: column; }
+.shop-name { font-weight: 700; color: #f0e8d8; }
+.shop-name em { color: #7bff9b; font-style: normal; font-size: 0.8rem; }
+.shop-desc { font-size: 0.82rem; color: #9a8f78; }
+.shop-stock { font-size: 0.82rem; color: #cbbfa8; min-width: 66px; text-align: right; }
+.shop-item.soldout .shop-stock { color: #ff6b5b; font-weight: 700; }
+.shop-price { color: #ffd970; font-weight: 700; min-width: 70px; text-align: right; }
+.shop-buy {
+  font-size: 0.95rem; padding: 8px 18px; min-width: 92px;
+  box-shadow: none; letter-spacing: 0;
+}
+.shop-buy:disabled { opacity: 0.45; cursor: not-allowed; filter: grayscale(0.6); }
+.shop-buy.poor { background: linear-gradient(180deg, #8a8a8a, #5a5a5a); }
+
+/* ---------- Floating enemy health bars ---------- */
+#enemy-bars { position: absolute; inset: 0; pointer-events: none; }
+.enemy-hpbar {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  width: 84px;
+  text-align: center;
+}
+.enemy-hpbar.boss { width: 150px; }
+.ehp-name {
+  display: block; font-size: 0.68rem; color: #ffd7cf;
+  text-shadow: 0 1px 3px #000; margin-bottom: 2px; white-space: nowrap;
+}
+.enemy-hpbar.boss .ehp-name { font-size: 0.85rem; color: #ff9b8b; font-weight: 700; }
+.ehp-track {
+  height: 6px; background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.8); border-radius: 3px; overflow: hidden;
+}
+.enemy-hpbar.boss .ehp-track { height: 9px; }
+.ehp-fill {
+  height: 100%; width: 100%;
+  background: linear-gradient(180deg, #ff6b5b, #a01f10);
+  transition: width 0.15s ease;
+}
+.enemy-hpbar.boss .ehp-fill { background: linear-gradient(180deg, #ff8b6b, #b0301f); }
+
+/* ---------- Frozen overlay ---------- */
+#frozen-overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: inset 0 0 160px 40px rgba(120, 200, 255, 0.55);
+  background: rgba(150, 210, 255, 0.08);
+  pointer-events: none;
+}
+#frozen-overlay span {
+  font-size: 2.4rem; font-weight: 800; letter-spacing: 0.3rem;
+  color: #dff2ff; text-shadow: 0 0 20px rgba(120, 200, 255, 0.9);
+  animation: pulse 0.6s infinite;
+}
+
+/* ---------- Limit Break gauge ---------- */
+#limit-gauge {
+  position: absolute;
+  bottom: 96px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px;
+}
+#limit-gauge .lg-label { font-size: 0.7rem; letter-spacing: 0.15rem; color: #ffd970; font-weight: 700; }
+#limit-gauge .lg-bar {
+  width: 220px; height: 10px; background: rgba(0,0,0,0.6);
+  border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+}
+#limit-gauge .lg-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, #d4831f, #ffe070);
+  transition: width 0.2s ease;
+}
+#limit-gauge .lg-hint { font-size: 0.72rem; color: #6f6858; }
+#limit-gauge.full .lg-fill { background: linear-gradient(90deg, #ffd970, #fff2c0); box-shadow: 0 0 12px #ffe070; }
+#limit-gauge.full .lg-hint { color: #ffe070; font-weight: 700; animation: pulse 0.6s infinite; }
+
+/* ---------- Lock-on reticle ---------- */
+#lock-reticle {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+#lock-reticle span {
+  display: block;
+  width: 46px; height: 46px;
+  border: 2px solid #ff5b4b;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(255,80,60,0.7), inset 0 0 8px rgba(255,80,60,0.4);
+  animation: lockspin 3s linear infinite;
+}
+#lock-reticle span::before, #lock-reticle span::after {
+  content: ''; position: absolute; background: #ff5b4b;
+}
+#lock-reticle span::before { width: 2px; height: 12px; left: 21px; top: -8px; }
+#lock-reticle span::after { width: 2px; height: 12px; left: 21px; bottom: -8px; }
+@keyframes lockspin { to { transform: rotate(360deg); } }
+
+/* ---------- Limit Break flash + banner ---------- */
+#limit-fx { position: absolute; inset: 0; pointer-events: none; z-index: 70; }
+#limit-fx .lf-flash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+#limit-fx .lf-banner {
+  position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%) scale(0.6);
+  font-family: var(--font); font-size: 3.4rem; font-weight: 800; letter-spacing: 0.4rem;
+  color: #fff; text-shadow: 0 0 24px #ffd970, 0 4px 12px #000; opacity: 0;
+}
+#limit-fx.go .lf-flash { animation: lfFlash 0.5s ease-out; }
+#limit-fx.go .lf-banner { animation: lfBanner 1.1s ease-out; }
+@keyframes lfFlash { 0% { opacity: 0; } 12% { opacity: 0.85; } 100% { opacity: 0; } }
+@keyframes lfBanner {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+  75% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+/* ============================================================
+   Mobile touch controls (only injected on touch devices)
+   ============================================================ */
+#touch-controls { position: fixed; inset: 0; z-index: 80; pointer-events: none; }
+#touch-controls #look-zone {
+  position: absolute; inset: 0; pointer-events: auto;   /* whole screen = look drag */
+}
+#touch-controls #joystick {
+  position: absolute; left: 26px; bottom: 26px;
+  width: 140px; height: 140px; pointer-events: auto; touch-action: none;
+  display: flex; align-items: center; justify-content: center;
+}
+.joy-base {
+  width: 130px; height: 130px; border-radius: 50%;
+  background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.25);
+  display: flex; align-items: center; justify-content: center;
+}
+.joy-knob {
+  width: 58px; height: 58px; border-radius: 50%;
+  background: rgba(255,224,160,0.55); border: 2px solid rgba(255,255,255,0.5);
+}
+#touch-buttons {
+  position: absolute; right: 20px; bottom: 24px;
+  width: 210px; height: 210px; pointer-events: none;
+}
+#touch-buttons .tbtn { position: absolute; }
+.tbtn {
+  pointer-events: auto; touch-action: none;
+  width: 62px; height: 62px; border-radius: 50%;
+  font-size: 1.5rem; font-family: var(--font); font-weight: 700;
+  color: #1a1206; background: linear-gradient(180deg, #f0c674, #c8912f);
+  border: 1px solid #ffe0a0; box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+}
+.tbtn.pressed { transform: scale(0.9); filter: brightness(1.3); }
+.tbtn.atk   { right: 74px; bottom: 4px; width: 76px; height: 76px; font-size: 1.9rem; }
+.tbtn.a1    { right: 150px; bottom: 60px; background: linear-gradient(180deg, #ff8b6b, #c0392b); color: #fff; }
+.tbtn.a2    { right: 96px;  bottom: 118px; background: linear-gradient(180deg, #6bb0ff, #2471c9); color: #fff; }
+.tbtn.a3    { right: 18px;  bottom: 132px; background: linear-gradient(180deg, #9b6bff, #6a2fd0); color: #fff; }
+.tbtn.dash  { right: 2px;   bottom: 66px; width: 52px; height: 52px; font-size: 1.3rem; }
+.tbtn.lock  { right: 158px; bottom: 4px; width: 52px; height: 52px; font-size: 1.2rem; }
+.tbtn.limit { right: 62px;  bottom: 122px; width: 56px; height: 56px; background: linear-gradient(180deg, #ffe070, #d4831f); }
+#touch-menu { position: absolute; top: 18px; right: 18px; width: 50px; height: 50px; font-size: 1.4rem; pointer-events: auto; }

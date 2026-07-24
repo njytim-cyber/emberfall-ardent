@@ -9,13 +9,7 @@ import * as THREE from 'three';
 import { Enemy } from '../entities/Enemy.js';
 import { Projectile } from '../entities/Projectile.js';
 import { CONFIG } from '../data/config.js';
-
-// A mixed gauntlet of Helix security down the avenue (harder toward the plaza)
-const STREET_TABLE = [
-  'goblin', 'wolf', 'goblin', 'skeleton', 'wolf', 'ogre',
-  'skeleton', 'iceshaman', 'wraith', 'revenant', 'frostward', 'wolf',
-  'revenant', 'icegolem', 'frostward', 'iceshaman',
-];
+import { WAVES } from '../data/waves.js';
 
 // Bosses — tuned for fair real-time fights (internal ids kept stable)
 const BOSSES = {
@@ -49,20 +43,42 @@ export class Combat {
     this.onPlayerDeath = null;
     this.onDroneDamage = null;   // charges the Limit gauge (drones only)
     this.onLimitStart = null;    // triggers screen flash + camera shake
+    this.onLimitRelease = null;
+    this.onWave = null;          // (wave) => Game reacts (log / chapter)
 
-    town.streetSpawns.forEach((pos, i) => {
-      const e = new Enemy(this.scene, pos, STREET_TABLE[i % STREET_TABLE.length]);
-      e._rewarded = false;
-      e.group = 'security';
-      e.uid = ENEMY_UID++;
-      this.enemies.push(e);
-    });
+    // Wave (group) encounters — spawned one group at a time as you advance
+    this.waves = WAVES;
+    this.waveIndex = 0;
   }
 
   get all() { return this.boss ? [...this.enemies, this.boss] : this.enemies; }
 
+  get livingCount() { return this.enemies.filter((e) => e.alive).length; }
+  get wavesDone() { return this.waveIndex >= this.waves.length; }
+
+  /** Spawn the next group once the hero reaches it and the last group is clear. */
+  _updateWaves() {
+    if (this.waveIndex >= this.waves.length) return;
+    if (this.livingCount > 0) return;                     // clear the current group first
+    const wave = this.waves[this.waveIndex];
+    if (this.player.position.z > wave.triggerZ) return;   // not advanced far enough yet
+
+    wave.foes.forEach((key, i) => {
+      const spread = (i - (wave.foes.length - 1) / 2) * 3.2;
+      const pos = new THREE.Vector3(spread, 0, wave.z + (Math.random() - 0.5) * 3);
+      const e = new Enemy(this.scene, pos, key);
+      e._rewarded = false;
+      e.group = wave.tag;
+      e.uid = ENEMY_UID++;
+      this.enemies.push(e);
+    });
+    this.waveIndex++;
+    if (this.onWave) this.onWave(wave);
+  }
+
   // ---------------------------------------------------------
   update(dt) {
+    this._updateWaves();
     for (const e of this.all) {
       e.update(dt, this.player);
       if (e.pendingAttack) {

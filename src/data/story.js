@@ -1,152 +1,105 @@
 /* ============================================================
-   Story script — EMBERFALL: a 3-chapter cyberpunk story.
+   Story script — EMBERFALL (long-form).
 
-   The megacorp HELIX rules the city of ARDENT through its
-   President, VANCE — metering the air, water, and power of
-   millions. The resistance cell EMBERFALL fights to bring it
-   down. You are CADE, an Emberfall operative.
+   The ancient EMBERWOOD is dying. HELIX and its President VANCE
+   drain the forest's living heart to power Project SUNSET — a grid
+   to control the city of Ardent. As the wood sickens, its guardians
+   (ents, wisps) have gone feral. You are CADE, last warden of
+   Emberfall: cut through the wood, breach the city, and end Vance.
 
-     Chapter 1 — The Undercity : hit a Helix checkpoint
-     Chapter 2 — Vance Spire   : infiltrate, then escape lockdown
-     Chapter 3 — The Summit    : kill President Vance
-
-   Scene keys are reused by the Story manager; only the content
-   changes. line = { speaker, portrait, text, mood? }
+   Beats fire as you advance; each chapter has several.
+   line = { speaker, portrait, text, mood? }
    ============================================================ */
 
 export const SCENES = {
-  // ================= CHAPTER 1 — The Undercity =================
+  // ================= CHAPTER 1 — The Emberwood =================
   intro: [
-    { speaker: 'Narrator', portrait: '🏙️', text: 'ARDENT, high noon. A city of a hundred million, every breath of it metered by one corporation: HELIX.', mood: 'dark' },
-    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'Cade — comms check. President Vance is about to flip Project SUNSET live: a grid that turns every citizen into a controllable node.' },
-    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Then he doesn\'t get to finish. Where is he?', mood: 'hero' },
-    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'Helix HQ — straight down Vance Avenue. The whole street\'s a gauntlet of security between you and the man himself. I\'ll be on your ear the whole way.' },
-    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'Fight your way to the plaza and end this, Cade. Doc\'s got a stall on the strip if you need gear.' },
-    { speaker: 'Narrator', portrait: '📻', text: 'CHAPTER 1 — THE CHECKPOINT', mood: 'dark' },
-    { speaker: 'Narrator', portrait: '⚔️', text: 'OBJECTIVE: Fight down Vance Avenue to the plaza. Move into an enemy to engage.', mood: 'dark' },
+    { speaker: 'Narrator', portrait: '🌲', text: 'The EMBERWOOD — a forest older than the city beside it, its trees lit from within by a soft, living glow. Wardens have kept it a thousand years.', mood: 'dark' },
+    { speaker: 'Narrator', portrait: '🍂', text: 'Now that glow guts out, tree by tree. The wood runs a fever, and its gentle guardians thrash in delirium, striking at anything that moves.', mood: 'dark' },
+    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'Cade — you\'re awake. Thank the ember. The wood pulled you under when the sickness spiked three days ago. You\'ve been out cold in the roots.' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Three days? Rae, the trees are moving. The ents — they\'re coming right at me.', mood: 'hero' },
+    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'I know. And I know how that sounds coming from me, but you have to fight them. They\'re not themselves. They\'re in agony.' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'What did this? The wood hasn\'t so much as dropped a leaf out of turn in my whole life.', mood: 'hero' },
+    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'Helix. They ran a drain-line from the city into the Emberheart at the wood\'s core — siphoning its life straight into Vance\'s SUNSET grid.' },
+    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'Every tree that goes dark is life they\'ve stolen. The guardians feel it die and they lash out. It\'s not evil, Cade. It\'s grief.' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Then I end the grief at its source. I cut the line and I make Vance answer for it.', mood: 'hero' },
+    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'That\'s the warden I trained. The drain-line runs to the city plaza, dead ahead through the wood. I\'ll be on your ear the whole way. Move carefully — and quickly.' },
+    { speaker: 'Narrator', portrait: '📻', text: 'CHAPTER 1 — THE EMBERWOOD', mood: 'dark' },
+    { speaker: 'Narrator', portrait: '⚔️', text: 'OBJECTIVE: Push down the forest path. Groups of corrupted guardians block the way — clear each group to advance.', mood: 'dark' },
   ],
 
-  quest_start: [
-    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'That checkpoint is crawling with Helix security — grunts, recon drones, riot troopers.' },
-    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'Take down THREE of their units and their squad captain will come running.' },
-    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Three down, then the captain. On it.', mood: 'hero' },
-    { speaker: 'Narrator', portrait: '⚔️', text: 'OBJECTIVE: Take down 3 Helix security units. Move into an enemy to engage.', mood: 'dark' },
+  forest_omen: [
+    { speaker: '???', portrait: '🌟', text: '…warden…', mood: 'hero' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Who\'s there? Rae — tell me you heard that.', mood: 'hero' },
+    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'I heard it. That\'s not on any channel, Cade. That\'s the wood itself — the Emberheart, speaking through what\'s left of its strength.' },
+    { speaker: '???', portrait: '🌟', text: '…you carry the old ember in you… the last of a line that swore to keep me… I feel you drawing near…', mood: 'hero' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'I\'m coming. Hold on. Whatever they\'ve done, I\'ll undo it.', mood: 'hero' },
+    { speaker: '???', portrait: '🌟', text: '…hurry… when the last light goes out, I will not wake again… free me…', mood: 'hero' },
   ],
 
-  progress_1: [{ speaker: 'Rae', portrait: '🧑‍🚀', text: 'One squad down! Helix is rerouting patrols. Keep the pressure on.' }],
-  progress_2: [{ speaker: 'Rae', portrait: '🧑‍🚀', text: 'Two down! Their captain\'s breaking cover — I can see him on the cams.' }],
-
-  boss_appear: [
-    { speaker: 'Narrator', portrait: '🌆', text: 'The plaza. Vance stands before Helix HQ, his SUNSET grid pulsing overhead — and as you approach, his desk folds away.', mood: 'dark' },
-    { speaker: 'President Vance', portrait: '👔', text: 'The famous Emberfall operative. You\'ve cut through my whole avenue. Impressive. Pointless — but impressive.', mood: 'boss' },
-    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Shut down SUNSET, Vance. Now. Or I do it the loud way.', mood: 'hero' },
-    { speaker: 'President Vance', portrait: '👔', text: 'SUNSET is ORDER, boy.', mood: 'boss' },
-    { speaker: 'Narrator', portrait: '🦿', text: 'Servos scream as an executive combat exosuit seals around him — Helix\'s last, best weapon.', mood: 'dark' },
-    { speaker: 'President Vance', portrait: '👔', text: 'I built this city. I will not be unmade by a rat in a mask. Come — let me show you real power.', mood: 'boss' },
+  forest_mid: [
+    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'You\'re past the deep grove. Feel that? The air\'s colder — the sickness is thickest up ahead, closest to the drain.' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'The wisps are worse here. They used to lead travelers home. Now they burn.', mood: 'hero' },
+    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'The corruption drives them. Put them down gently as you can and keep pushing — the tree line ends just ahead. That\'s where the wood becomes their city.' },
   ],
 
-  boss_phase: [{ speaker: 'President Vance', portrait: '👔', text: 'You think this HURTS me? EMP surge — freeze, and watch your city burn!', mood: 'boss' }],
-
-  // ---- Chapter 2: mid-avenue ----
+  // ================= CHAPTER 2 — The City Gate =================
   chapter2: [
-    { speaker: 'Narrator', portrait: '📻', text: 'CHAPTER 2 — THE ASCENT', mood: 'dark' },
-    { speaker: 'Nyx', portrait: '👩‍💻', text: 'Cade, it\'s Nyx — I\'m patched into your comms now. You just tripped Helix\'s inner cordon. They\'re rerouting every unit on the block to you.' },
-    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'And Vance started the SUNSET countdown the second you hit the street. You\'ve got minutes, not hours. Keep pushing.' },
-    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Then I stop walking and start running. Watch my back, both of you.', mood: 'hero' },
-    { speaker: 'Nyx', portrait: '👩‍💻', text: 'Heads up — combat androids and cryo units ahead. The cryo ones drink cold tech; don\'t hand them a Cryo Edge.' },
+    { speaker: 'Narrator', portrait: '🏙️', text: 'The trees thin, then stop — cut to raw stumps. Beyond the last of the Emberwood rises a wall of steel and cold light: the edge of ARDENT.', mood: 'dark' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'They cut the old boundary trees. The ones that were here before the first brick of this city.', mood: 'hero' },
+    { speaker: 'Nyx', portrait: '👩‍💻', text: 'Cade — Nyx here. Rae patched me in. I\'m already deep in Helix\'s network, and I\'ve got eyes on you. Which is to say: so do they. You just walked onto every camera they own.' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Let them watch. It\'ll save me the trouble of announcing myself. Where\'s the drain-line?', mood: 'hero' },
+    { speaker: 'Nyx', portrait: '👩‍💻', text: 'Straight down Vance Avenue to the central plaza. That\'s where SUNSET runs, that\'s where the drain terminates, and that\'s where Vance holds court like it\'s a throne room.' },
+    { speaker: 'Nyx', portrait: '👩‍💻', text: 'Bad news: the whole avenue is a Helix security gauntlet — grunts, recon drones, riot troopers, and worse the closer you get. Good news: I can thin their firewalls as you go.' },
+    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'The wood is counting on you, Cade. Every second we talk, another tree goes dark. Get through that city.' },
+    { speaker: 'Narrator', portrait: '📻', text: 'CHAPTER 2 — THE CITY GATE', mood: 'dark' },
   ],
 
-  // ---- Chapter 3: the final stretch ----
+  city_mid: [
+    { speaker: 'Nyx', portrait: '👩‍💻', text: 'Halfway up the avenue. Their security AI just re-tagged you from "intruder" to "priority threat." Congratulations, I think.' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'The lights up ahead — that green in the sky. That\'s the wood\'s light, isn\'t it.', mood: 'hero' },
+    { speaker: 'Nyx', portrait: '👩‍💻', text: 'Yeah. That column over the plaza is the SUNSET conduit. Every bit of it was alive an hour ago. Keep going — it gets uglier from here.' },
+  ],
+
+  // ================= CHAPTER 3 — Vance Avenue =================
   chapter3: [
-    { speaker: 'Narrator', portrait: '📻', text: 'CHAPTER 3 — THE PLAZA', mood: 'dark' },
-    { speaker: 'President Vance', portrait: '👔', text: 'So the little ember made it to my doorstep. I\'ve watched you cut through my whole avenue on forty cameras.', mood: 'boss' },
-    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Then you know I\'m not stopping. Shut SUNSET down, Vance.', mood: 'hero' },
-    { speaker: 'President Vance', portrait: '👔', text: 'Come to the plaza and make me. My elite guard will be… a formality. And then you and I will have words.', mood: 'boss' },
-    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'That\'s the last stretch, Cade. Clear his guard and Vance is all that\'s left. End this.' },
+    { speaker: 'Narrator', portrait: '📻', text: 'CHAPTER 3 — VANCE AVENUE', mood: 'dark' },
+    { speaker: 'President Vance', portrait: '👔', text: 'So the forest sent a champion. How quaint. I\'ve watched you carve through my androids on forty cameras, warden. You have my attention.', mood: 'boss' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Cut the drain-line, Vance. Give the wood back its heart, and I\'ll walk out of your city.', mood: 'hero' },
+    { speaker: 'President Vance', portrait: '👔', text: 'That "heart" is the cleanest, cheapest, most reliable power this city has ever had. Do you know what light cost the people of Ardent before me? Everything.', mood: 'boss' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'And now it costs a thousand years of forest. That\'s not a bargain. That\'s a theft you dressed up as progress.', mood: 'hero' },
+    { speaker: 'President Vance', portrait: '👔', text: 'Spoken like someone who\'s never had to keep the lights on for millions. Come to the plaza, warden. I\'ll educate you personally.', mood: 'boss' },
+    { speaker: 'Nyx', portrait: '👩‍💻', text: 'He\'s waiting at the plaza, Cade. Clear the last of his elite guard and it\'s just you and him. I\'ll have the drain-line schematics ready when you get there.' },
   ],
 
-  gorbash_defeat: [
-    { speaker: 'Riot Captain Brand', portrait: '💥', text: 'Impossible… you\'re just… one operative…', mood: 'boss' },
-    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Emberfall\'s never just one. Rae — the road?', mood: 'hero' },
-    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'Open. But listen — SUNSET goes live from inside Vance Spire itself. If you can reach the tower, you can stop it at the source.' },
-    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'Head for the Spire district. My best hacker, Nyx, will meet you on comms there. Go, Cade.' },
-    { speaker: 'Narrator', portrait: '🧭', text: 'CHAPTER 2 — Travel the road to Vance Spire.', mood: 'dark' },
+  pre_boss: [
+    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'The plaza\'s just ahead. Cade — before you go in. Whatever he says up there, remember why you came. Not for revenge. For the wood.' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'I remember. It talked to me, Rae. It\'s still in there, still holding on. I\'m not letting it go dark.', mood: 'hero' },
+    { speaker: '???', portrait: '🌟', text: '…so close now, warden… I can feel your ember at the gates… end it…', mood: 'hero' },
   ],
 
-  // ================= CHAPTER 2 — Vance Spire =================
-  arrive_duskhaven: [
-    { speaker: 'Narrator', portrait: '🏢', text: 'VANCE SPIRE claws a mile into the smog, its lower floors a fortress of blue security light.', mood: 'dark' },
-    { speaker: 'Nyx', portrait: '👩‍💻', text: 'Cade, Nyx here. I\'m already in their network. The lift to the executive floors is locked behind a security cordon.' },
-    { speaker: 'Cade (You)', portrait: '🕶️', text: 'So I make some noise and you slip through the gap?', mood: 'hero' },
-    { speaker: 'Nyx', portrait: '👩‍💻', text: 'Exactly. Thin out their androids and the cordon drops. Ping me when you\'re ready to start the run.' },
+  // ================= CHAPTER 4 — The Plaza =================
+  boss_appear: [
+    { speaker: 'Narrator', portrait: '🌆', text: 'THE PLAZA. At its center a pillar of stolen green light pours up out of the ground into the SUNSET grid — the Emberheart\'s life, bleeding into the sky.', mood: 'dark' },
+    { speaker: 'President Vance', portrait: '👔', text: 'Beautiful, isn\'t it? A whole forest, refined into pure, obedient power. No rot. No waste. No sentiment.', mood: 'boss' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'You\'re bleeding something ancient to death to charge a battery, and you call the WOOD wasteful.', mood: 'hero' },
+    { speaker: 'President Vance', portrait: '👔', text: 'I\'m killing nothing. I\'m making it USEFUL — something your precious order never managed in a thousand years of standing around in the trees.', mood: 'boss' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'We kept it ALIVE. That was the point. That was always the point.', mood: 'hero' },
+    { speaker: 'Narrator', portrait: '🦿', text: 'Servos scream as an executive combat exosuit unfolds and seals around Vance — Helix\'s last, best weapon.', mood: 'dark' },
+    { speaker: 'President Vance', portrait: '👔', text: 'CHAPTER 4 — I built this city with my hands, warden. I will not be unmade by a gardener with a sword. Come. Let me show you real power.', mood: 'boss' },
   ],
 
-  quest2_start: [
-    { speaker: 'Nyx', portrait: '👩‍💻', text: 'The lobby\'s guarded by combat androids, stealth units, and heavy enforcers. Nasty.' },
-    { speaker: 'Nyx', portrait: '👩‍💻', text: 'Scrap FOUR of them and the security cordon collapses — then their lift-guardian wakes up.' },
-    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Four androids, then whatever\'s guarding the lift. Copy.', mood: 'hero' },
-    { speaker: 'Narrator', portrait: '⚔️', text: 'OBJECTIVE: Destroy 4 Helix androids in the Spire lobby.', mood: 'dark' },
-  ],
-
-  progress_c1: [{ speaker: 'Nyx', portrait: '👩‍💻', text: 'One down — cordon weakening. I\'m peeling their firewall as you go.' }],
-  progress_c2: [{ speaker: 'Nyx', portrait: '👩‍💻', text: 'Halfway. Their security AI just flagged you as a "priority threat." Congrats.' }],
-  progress_c3: [{ speaker: 'Nyx', portrait: '👩‍💻', text: 'One more android and the cordon is OPEN.' }],
-
-  boss2_appear: [
-    { speaker: 'Narrator', portrait: '🦾', text: 'The floor splits. A Hunter-Class Mech unfolds from the lift shaft, targeting lasers sweeping red across the lobby.', mood: 'dark' },
-    { speaker: 'Nyx', portrait: '👩‍💻', text: 'That\'s a HUNTER, Cade — Helix\'s flagship war-frame. Do NOT let it corner you.' },
-    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Big machine. Big weak spots. Let\'s find them.', mood: 'hero' },
-  ],
-
-  boss2_phase: [{ speaker: 'Hunter-Class Mech', portrait: '🦾', text: 'THREAT ESCALATION. WEAPONS FREE. PURGE INITIATED.', mood: 'boss' }],
-
-  malketh_defeat: [
-    { speaker: 'Hunter-Class Mech', portrait: '💥', text: 'CORE… BREACH… LOCKDOWN… ENGAGED…', mood: 'boss' },
-    { speaker: 'Nyx', portrait: '👩‍💻', text: 'Cade — the Hunter tripped a full lockdown! Blast doors are dropping across the whole district. You have to MOVE.', mood: 'dark' },
-    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Get me a way up to Vance!', mood: 'hero' },
-    { speaker: 'Nyx', portrait: '👩‍💻', text: 'Working it — the maintenance lift to the Summit is one district over. But you\'re hurt. There\'s a fixer nearby who owes Emberfall a favor.' },
-    { speaker: 'Doc', portrait: '🧑‍🔧', text: 'Name\'s Doc. Nyx says you\'re good for it. Grab what you need off my rack, kid — the Summit doesn\'t forgive.' },
-    { speaker: 'Narrator', portrait: '🛒', text: 'OBJECTIVE: Buy any item from Doc (the "$") before the ascent.', mood: 'dark' },
-  ],
-
-  shop_bought: [
-    { speaker: 'Doc', portrait: '🧑‍🔧', text: 'Good pick. Now get out of my shop before the lockdown finds it. The Summit lift is open — go end this.' },
-    { speaker: 'Narrator', portrait: '🧭', text: 'CHAPTER 3 — Ascend to the Summit and reach President Vance.', mood: 'dark' },
-  ],
-
-  // ================= CHAPTER 3 — The Summit =================
-  arrive_frosthold: [
-    { speaker: 'Narrator', portrait: '🌆', text: 'THE SUMMIT. Above the smog at last — glass, gold, and silence. And at its center, a throne of screens.', mood: 'dark' },
-    { speaker: 'President Vance', portrait: '👔', text: 'The famous Emberfall operative. You\'ve cost me a checkpoint, a Hunter, and a very expensive evening. Impressive. Pointless, but impressive.', mood: 'boss' },
-    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Shut down SUNSET, Vance. Now. Or I do it the loud way.', mood: 'hero' },
-    { speaker: 'President Vance', portrait: '👔', text: 'SUNSET is mercy, boy — order for a city that would eat itself without me. My guard will show you the door. The high one.', mood: 'boss' },
-    { speaker: 'Narrator', portrait: '⚔️', text: 'OBJECTIVE: Wipe out 4 of Vance\'s elite guard to reach him.', mood: 'dark' },
-  ],
-
-  progress_f1: [{ speaker: 'President Vance', portrait: '👔', text: 'You dent my guard and think you\'ve won something. Charming.', mood: 'boss' }],
-  progress_f2: [{ speaker: 'President Vance', portrait: '👔', text: 'Do you know what I\'ve spent keeping this city ALIVE? More than you\'ll ever be worth.', mood: 'boss' }],
-  progress_f3: [{ speaker: 'President Vance', portrait: '👔', text: 'One guard left. Fine. If you want it done properly, I\'ll do it myself.', mood: 'boss' }],
-
-  boss3_appear: [
-    { speaker: 'Narrator', portrait: '🦿', text: 'Vance\'s desk folds away. Servos scream as an executive combat exosuit seals around him — Helix\'s last, best weapon.', mood: 'dark' },
-    { speaker: 'President Vance', portrait: '👔', text: 'I built this city. I will not be unmade by a rat in a mask. Come — let me show you real power.', mood: 'boss' },
-    { speaker: 'Narrator', portrait: '⚔️', text: 'Bring down President Vance. End Helix\'s reign.', mood: 'dark' },
-  ],
-
-  boss3_phase: [{ speaker: 'President Vance', portrait: '👔', text: 'You think this HURTS me? EMP surge — freeze, and watch your city burn!', mood: 'boss' }],
+  boss_phase: [{ speaker: 'President Vance', portrait: '👔', text: 'You think this HURTS me? EMP surge — freeze where you stand, and watch your precious wood go dark for good!', mood: 'boss' }],
 
   true_ending: [
-    { speaker: 'President Vance', portrait: '💥', text: 'No… I AM Helix… without me… the city… falls…', mood: 'boss' },
-    { speaker: 'Cade (You)', portrait: '🕶️', text: 'No, Vance. Without you, it finally stands.', mood: 'hero' },
-    { speaker: 'Narrator', portrait: '🌇', text: 'The exosuit goes dark. Across Ardent, SUNSET flickers and dies — and for the first time in a lifetime, the grid answers to no one.', mood: 'dark' },
-    { speaker: 'Nyx', portrait: '👩‍💻', text: 'It\'s done, Cade. Every screen in the city just went black, then… lit up with our sign. Emberfall\'s.' },
-    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'You gave a hundred million people their air back tonight. Come home, operative. There\'s a whole city to rebuild — and it\'s ours now.' },
-    { speaker: 'Cade (You)', portrait: '🕶️', text: 'On my way. Leave a light on.', mood: 'hero' },
-    { speaker: 'Narrator', portrait: '🏆', text: 'THE END — Thank you for playing EMBERFALL. (The city\'s still dangerous; foes respawn if you want to keep fighting.)', mood: 'dark' },
+    { speaker: 'President Vance', portrait: '💥', text: 'No… the grid… the city needs… ME. Without me they\'re back in the DARK…', mood: 'boss' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'No, Vance. They just needed you gone. There was always another way to keep the lights on. You just never looked for it.', mood: 'hero' },
+    { speaker: 'Narrator', portrait: '💠', text: 'The exosuit goes dark. Cade drives a blade into the conduit and severs the drain-line — and the pillar of stolen light reverses, pouring back down into the earth, racing home through the roots.', mood: 'dark' },
+    { speaker: '???', portrait: '🌟', text: '…warmth… oh, warmth again… thank you, warden. The Emberwood remembers those who keep it. It will remember you longest of all.', mood: 'hero' },
+    { speaker: 'Nyx', portrait: '👩‍💻', text: 'Cade — every screen in Ardent just went black, then lit up green. The city\'s running on the wood\'s light now… but freely given this time, not torn out.' },
+    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'You saved them both — the forest and the city that grew up beside it. There hasn\'t been a warden like you in ten generations.' },
+    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'Come home, Cade. There\'s a whole wood waking up that wants to thank you in person. And it\'s glowing again — really glowing.' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'On my way. Leave a light on for me — a real one.', mood: 'hero' },
+    { speaker: 'Narrator', portrait: '🏆', text: 'THE END — Thank you for playing EMBERFALL. (Foes still stir along the path if you want to keep training.)', mood: 'dark' },
   ],
 };
-
-// Thresholds before each chapter boss appears
-export const MARAUDERS_TO_DEFEAT = 3;
-export const CORRUPTED_TO_DEFEAT = 4;
-export const FROZEN_TO_DEFEAT = 4;

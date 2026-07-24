@@ -39,15 +39,17 @@ export const CONFIG = {
     leashRange: 30,      // gives up and returns home beyond this
   },
 
-  // --- World: one linear street (FF-style corridor) ---
+  // --- World: a linear journey — mystical forest → city → plaza ---
   world: {
-    streetHalfWidth: 12,       // walkable half-width of the street
+    streetHalfWidth: 12,       // walkable half-width of the path/street
     plazaHalfWidth: 22,        // wider open area at the boss plaza
-    startZ: 66,                // player spawn end of the street
+    startZ: 100,               // spawn: deep in the Emberwood
+    forestEndZ: 4,             // the wood gives way to the city gate here
     endZ: -156,                // far end (behind the boss plaza)
     plazaZ: -150,              // where President Vance waits
-    fogNear: 50,
-    fogFar: 320,
+    avenueZ: -60,              // deeper into the city (chapter beat)
+    fogNear: 45,
+    fogFar: 300,
   },
 
   // --- Camera (third person) ---

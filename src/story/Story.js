@@ -1,14 +1,13 @@
 /* ============================================================
-   Story — one linear mission: fight down the avenue of Ardent to
-   the plaza, then take down President Vance (the only boss).
-   New tech abilities unlock as you rack up takedowns.
+   Story — the forest → city → plaza journey. Chapter beats fire as
+   the hero advances (position triggers); the Game calls the reach*
+   methods. New blade-arts unlock as the takedown count climbs.
    ============================================================ */
 
 import { Cutscene } from './Cutscene.js';
 import { SCENES } from '../data/story.js';
 import { SPELLS_BY_ID } from '../data/spells.js';
 
-// Abilities acquired as the takedown count climbs
 const KILL_UNLOCKS = [
   { at: 2, id: 'thunder' },
   { at: 4, id: 'drain' },
@@ -28,8 +27,12 @@ export class Story {
       introSeen: false,
       chapter: 1,
       kills: 0,
-      chapter2Shown: false,
-      chapter3Shown: false,
+      forestOmenShown: false,
+      forestMidShown: false,
+      cityReached: false,
+      cityMidShown: false,
+      avenueReached: false,
+      preBossShown: false,
       bossSpawned: false,
       bossDefeated: false,
       complete: false,
@@ -47,18 +50,14 @@ export class Story {
 
   objective() {
     const f = this.flags;
-    if (f.complete) return 'Ardent is free. (Free roam)';
-    if (f.bossSpawned) return 'Ch.3 — Take down President Vance!';
-    if (f.chapter === 3) return `Ch.3 · Push to the plaza — takedowns: ${f.kills}`;
-    if (f.chapter === 2) return `Ch.2 · Fight up the avenue — takedowns: ${f.kills}/11`;
-    if (f.introSeen) return `Ch.1 · Break the checkpoint — takedowns: ${f.kills}/5`;
-    return 'Meet Rae to begin (the "!").';
+    if (f.complete) return 'Ardent & the Emberwood are free. (Free roam)';
+    if (f.bossSpawned) return 'Ch.4 — Take down President Vance!';
+    if (f.avenueReached) return 'Ch.3 · Reach the plaza and confront Vance.';
+    if (f.cityReached) return `Ch.2 · Fight up Vance Avenue · takedowns: ${f.kills}`;
+    if (f.introSeen) return `Ch.1 · Push through the Emberwood · takedowns: ${f.kills}`;
+    return 'Wake, warden…';
   }
 
-  /**
-   * Every takedown: count it, hand out tech, and advance chapters.
-   * Returns a cutscene key to play (chapter transition) or null.
-   */
   onEnemyDefeated() {
     this.flags.kills++;
     for (const u of KILL_UNLOCKS) {
@@ -66,19 +65,23 @@ export class Story {
         this.onSpellLearned(SPELLS_BY_ID[u.id]);
       }
     }
-    if (this.flags.kills >= 5 && !this.flags.chapter2Shown) {
-      this.flags.chapter2Shown = true; this.flags.chapter = 2; return 'chapter2';
-    }
-    if (this.flags.kills >= 11 && !this.flags.chapter3Shown) {
-      this.flags.chapter3Shown = true; this.flags.chapter = 3; return 'chapter3';
-    }
-    return null;
   }
 
-  // ---- The lone boss: President Vance at the plaza (Chapter 3 only) ----
-  canFightBoss() { return this.flags.chapter === 3 && !this.flags.bossSpawned && !this.flags.complete; }
+  // ---- Chapter 1: the Emberwood ----
+  async reachOmen() { if (this.flags.forestOmenShown) return; this.flags.forestOmenShown = true; await this.play('forest_omen'); }
+  async reachForestMid() { if (this.flags.forestMidShown) return; this.flags.forestMidShown = true; await this.play('forest_mid'); }
 
-  async spawnBoss() { await this.play('boss_appear'); this.flags.bossSpawned = true; }
+  // ---- Chapter 2: the city gate ----
+  async reachCity() { if (this.flags.cityReached) return; this.flags.cityReached = true; this.flags.chapter = 2; await this.play('chapter2'); }
+  async reachCityMid() { if (this.flags.cityMidShown) return; this.flags.cityMidShown = true; await this.play('city_mid'); }
+
+  // ---- Chapter 3: the avenue ----
+  async reachAvenue() { if (this.flags.avenueReached) return; this.flags.avenueReached = true; this.flags.chapter = 3; await this.play('chapter3'); }
+  async reachPreBoss() { if (this.flags.preBossShown) return; this.flags.preBossShown = true; await this.play('pre_boss'); }
+
+  // ---- Chapter 4: the plaza / boss ----
+  canFightBoss() { return this.flags.avenueReached && !this.flags.bossSpawned && !this.flags.complete; }
+  async spawnBoss() { await this.play('boss_appear'); this.flags.chapter = 4; this.flags.bossSpawned = true; }
   bossPhaseCallback = async () => { await this.play('boss_phase'); };
 
   async onBossDefeated() {

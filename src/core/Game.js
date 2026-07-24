@@ -22,6 +22,7 @@ import { Menu } from '../ui/Menu.js';
 import { Shop } from '../ui/Shop.js';
 import { MobileControls } from '../ui/MobileControls.js';
 import { SPELLS_BY_ID } from '../data/spells.js';
+import { CONFIG } from '../data/config.js';
 
 const QUICK_KEYS = [',', '.', '/'];
 
@@ -90,6 +91,9 @@ export class Game {
     this.combat.onBossPhase = () => this._runCutscene(() => this.story.bossPhaseCallback());
     this.combat.onBossDefeated = () => this._runCutscene(async () => { this.combat.boss = null; await this.story.onBossDefeated(); });
     this.combat.onPlayerDeath = () => this._gameOver();
+    // A new group of enemies appears
+    this.combat.onWave = (wave) => this.hud.log(
+      wave.tag === 'forest' ? '🌿 Corrupted guardians block the path!' : '🚨 Helix security moves in!', 'crit');
     this._shake = 0;
 
     // --- NPCs: Rae (contact) + Doc (always-open vendor) ---
@@ -204,7 +208,23 @@ export class Game {
     }
     if (this.nearbyNPC && this.input.wasPressed('e')) { this._interact(); return; }
 
-    // President Vance appears at the plaza
+    // Position-triggered story beats (each fires once as you advance)
+    const z = this.player.position.z;
+    const f = this.story.flags;
+    const W = CONFIG.world;
+    const beats = [
+      [z <= 60 && !f.forestOmenShown, () => this.story.reachOmen()],
+      [z <= 26 && !f.forestMidShown, () => this.story.reachForestMid()],
+      [z <= W.forestEndZ && !f.cityReached, () => this.story.reachCity()],
+      [z <= -34 && f.cityReached && !f.cityMidShown, () => this.story.reachCityMid()],
+      [z <= W.avenueZ && f.cityReached && !f.avenueReached, () => this.story.reachAvenue()],
+      [z <= -116 && f.avenueReached && !f.preBossShown, () => this.story.reachPreBoss()],
+    ];
+    for (const [cond, fn] of beats) {
+      if (cond) { this._setFocus(this.player.position, 'orbit'); this._runCutscene(fn); return; }
+    }
+
+    // President Vance appears at the plaza (Chapter 4)
     if (this.story.canFightBoss() && this.player.position.distanceTo(this.town.bossPos) < 22) {
       this._triggerBoss();
       return;

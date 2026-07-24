@@ -9,6 +9,11 @@ import * as THREE from 'three';
 import { CONFIG } from '../data/config.js';
 
 const TYPES = {
+  // --- The Emberwood: corrupted forest guardians ---
+  ent:   { name: 'Corrupted Ent', body: 'ent',  color: 0x5a4a30, health: 130, damage: 18, speed: 2.6, scale: 1.5, xp: 60, gold: 25, attackRange: 3.0, attackCd: 1.9, eye: 0x9bff6b },
+  thorn: { name: 'Thornling',     body: 'ent',  color: 0x4a5a2c, health: 60, damage: 12, speed: 4.4, scale: 0.85, xp: 40, gold: 15, attackRange: 2.4, attackCd: 1.3, eye: 0xc8ff8b },
+  wisp:  { name: 'Blight Wisp',   body: 'wisp', color: 0xbfa0ff, health: 45, damage: 11, speed: 5.6, scale: 0.8, xp: 45, gold: 18, attackRange: 8.0, attackCd: 1.6, eye: 0xd6b8ff },
+
   // --- Chapter 1: Helix Security (the Undercity checkpoint) ---
   goblin: { name: 'Helix Grunt',   body: 'humanoid', color: 0x37414d, health: 45, damage: 8, speed: 4.5, scale: 0.9, xp: 30, gold: 12, attackRange: 2.2, attackCd: 1.4, eye: 0xff5533 },
   wolf:   { name: 'Recon Drone',   body: 'drone',    color: 0x51708a, health: 35, damage: 10, speed: 7.0, scale: 0.9, xp: 35, gold: 10, attackRange: 2.0, attackCd: 1.1, eye: 0x66ccff },
@@ -66,6 +71,8 @@ export class Enemy {
 
     if (this.body === 'drone') this._buildDrone(g);
     else if (this.body === 'mech') this._buildMech(g);
+    else if (this.body === 'ent') this._buildEnt(g);
+    else if (this.body === 'wisp') this._buildWisp(g);
     else this._buildHumanoid(g);
 
     g.scale.setScalar(t.scale);
@@ -130,6 +137,65 @@ export class Enemy {
       rotor.position.set(dx, 1.42, dz);
       g.add(rotor);
       this._rotors.push(rotor);
+    }
+  }
+
+  /** Corrupted Ent: a walking tree — bark trunk, glowing eyes, branch arms, leafy crown. */
+  _buildEnt(g) {
+    const bark = this.baseMat;
+    const leaf = new THREE.MeshStandardMaterial({ color: 0x2f5a2c, roughness: 0.9 });
+    const moss = new THREE.MeshStandardMaterial({ color: 0x3a5a2e, roughness: 1 });
+
+    // Trunk body
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.62, 2.2, 8), bark);
+    trunk.position.y = 1.2; trunk.castShadow = true; g.add(trunk);
+    // gnarled face area + glowing eyes
+    for (const sx of [-0.16, 0.16]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 8), this._eyeMat);
+      eye.position.set(sx, 1.7, 0.42); g.add(eye);
+    }
+    const brow = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.2), bark);
+    brow.position.set(0, 1.9, 0.4); g.add(brow);
+    // leafy crown
+    for (let i = 0; i < 3; i++) {
+      const cl = new THREE.Mesh(new THREE.SphereGeometry(0.7 - i * 0.12, 8, 7), leaf);
+      cl.position.set((Math.random() - 0.5) * 0.4, 2.4 + i * 0.35, (Math.random() - 0.5) * 0.4);
+      cl.castShadow = true; g.add(cl);
+    }
+    // branch arms
+    for (const sx of [-1, 1]) {
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 1.3, 6), bark);
+      arm.position.set(sx * 0.6, 1.4, 0);
+      arm.rotation.z = sx * 0.9; arm.castShadow = true; g.add(arm);
+      const twig = new THREE.Mesh(new THREE.SphereGeometry(0.22, 6, 6), moss);
+      twig.position.set(sx * 1.15, 1.85, 0); g.add(twig);
+    }
+    // root legs
+    for (const sx of [-0.25, 0.25]) {
+      const root = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 0.6, 6), bark);
+      root.position.set(sx, 0.3, 0); root.castShadow = true; g.add(root);
+    }
+  }
+
+  /** Blight Wisp: a floating spirit orb with a glowing core and motes. */
+  _buildWisp(g) {
+    this.hoverHeight = 1.5;
+    const core = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 16),
+      new THREE.MeshStandardMaterial({ color: this.baseMat.color, emissive: this._eyeColor, emissiveIntensity: 1.6, roughness: 0.3 }));
+    core.position.y = 1.5; g.add(core);
+    const halo = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 16),
+      new THREE.MeshBasicMaterial({ color: this._eyeColor, transparent: true, opacity: 0.22 }));
+    halo.position.y = 1.5; g.add(halo);
+    const light = new THREE.PointLight(this._eyeColor, 3, 7, 2);
+    light.position.y = 1.5; g.add(light);
+    // orbiting motes (spun in update via _rotors reuse)
+    this._motes = new THREE.Group(); this._motes.position.y = 1.5; g.add(this._motes);
+    for (let i = 0; i < 3; i++) {
+      const m = new THREE.Mesh(new THREE.SphereGeometry(0.08, 6, 6),
+        new THREE.MeshBasicMaterial({ color: this._eyeColor }));
+      const a = (i / 3) * Math.PI * 2;
+      m.position.set(Math.cos(a) * 0.6, 0, Math.sin(a) * 0.6);
+      this._motes.add(m);
     }
   }
 
@@ -236,10 +302,10 @@ export class Enemy {
     if (this._lunge > 0) this._lunge -= dt;
     const lungeOffset = this._lunge > 0 ? Math.sin((0.2 - this._lunge) / 0.2 * Math.PI) * 0.4 : 0;
 
-    // Vertical motion: drones hover + bob constantly; walkers bob only when moving
+    // Vertical motion: floaters (drones/wisps) hover + bob constantly
     const now = performance.now();
     let y = this.hoverHeight || 0;
-    if (this.body === 'drone') y += Math.sin(now * 0.004) * 0.18;
+    if (this.hoverHeight > 0) y += Math.sin(now * 0.004 + (this.uid || 0)) * 0.18;
     else if (moveDir) y += Math.abs(Math.sin(now * 0.015)) * 0.08;
 
     this.mesh.position.copy(this.position);
@@ -248,8 +314,9 @@ export class Enemy {
     this.mesh.position.z += Math.cos(this.facing) * lungeOffset;
     this.mesh.rotation.y = this.facing;
 
-    // Spin drone rotors
+    // Spin drone rotors / wisp motes
     if (this._rotors.length) for (const r of this._rotors) r.rotation.y += dt * 40;
+    if (this._motes) this._motes.rotation.y += dt * 2.2;
   }
 
   takeDamage(amount) {

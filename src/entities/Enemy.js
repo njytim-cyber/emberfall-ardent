@@ -283,8 +283,9 @@ export class Enemy {
   }
 
   update(dt, player) {
-    // Respawn handling
+    // Respawn handling (wave enemies stay dead so the group can be cleared)
     if (!this.alive) {
+      if (this.noRespawn) return;
       this.respawnTimer -= dt;
       if (this.respawnTimer <= 0) this._respawn();
       return;

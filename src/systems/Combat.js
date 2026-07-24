@@ -70,6 +70,7 @@ export class Combat {
       e._rewarded = false;
       e.group = wave.tag;
       e.uid = ENEMY_UID++;
+      e.noRespawn = true;         // cleared groups stay cleared (progression)
       this.enemies.push(e);
     });
     this._frontZ = wave.z - 3;         // one-group lock: can't pass until cleared

@@ -148,7 +148,9 @@ export class Player {
     // --- Right arm swings on attack; holds the drawn sword ---
     this.armGroup = makeArm(1);
     this.heldSword = this._makeSword();
-    this.heldSword.position.set(0, -0.72, 0.06);   // hilt at the hand, blade pointing down
+    // Gripped in the right hand, blade angled down-and-forward (clear of the ground)
+    this.heldSword.position.set(0.04, -0.62, 0.12);
+    this.heldSword.rotation.set(-0.55, 0, 0.12);
     this.heldSword.visible = false;                 // sheathed until combat
     this.armGroup.add(this.heldSword);
     g.add(this.armGroup);
@@ -267,18 +269,22 @@ export class Player {
       this.chargeTimer -= dt;
       this.armGroup.rotation.x = 2.6 + Math.sin(performance.now() * 0.05) * 0.12;
       this.mesh && (this.mesh.rotation.z = Math.sin(performance.now() * 0.06) * 0.03);
-    } else {
-      this.armGroup.rotation.x = -swing * 2.4;
-      if (this.mesh) this.mesh.rotation.z = 0;
     }
 
-    // Walk cycle: swing legs + off-arm, add a little bob
+    // Walk cycle: swing legs AND both arms (unless mid-attack/charge/leap), add a little bob
     const t = performance.now() * 0.011;
+    const armSwing = moving ? Math.sin(t) * 0.5 : 0;
+    const busyArm = this.braverTimer > 0 || this.chargeTimer > 0;
+    if (!busyArm) {
+      // right arm (sword hand) swings with the walk; attack swing still overrides
+      this.armGroup.rotation.x = -swing * 2.4 + (swing === 0 ? armSwing : 0);
+      if (this.mesh) this.mesh.rotation.z = 0;
+    }
     if (this.legs) {
       this.legs[0].rotation.x = moving ? Math.sin(t) * 0.6 : this.legs[0].rotation.x * 0.8;
       this.legs[1].rotation.x = moving ? -Math.sin(t) * 0.6 : this.legs[1].rotation.x * 0.8;
     }
-    if (this.leftArm && swing === 0) this.leftArm.rotation.x = moving ? -Math.sin(t) * 0.5 : this.leftArm.rotation.x * 0.8;
+    if (this.leftArm) this.leftArm.rotation.x = moving ? -armSwing : this.leftArm.rotation.x * 0.8;
     const bob = moving ? Math.abs(Math.sin(t)) * 0.06 : 0;
 
     this.mesh.position.copy(this.position);

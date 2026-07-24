@@ -36,6 +36,9 @@ export class Player {
     this.dashCd = 0;
     this.dashDir = new THREE.Vector3();
 
+    // --- Charge-up pose (abilities / Limit Break) ---
+    this.chargeTimer = 0;
+
     // --- Equipment (bought from the shop) ---
     this.equipment = { weapon: null, armor: null };
     this.weaponBonus = 0;   // added to melee damage
@@ -201,9 +204,17 @@ export class Player {
     if (this._attackAnim > 0) this._attackAnim -= dt;
     if (this.slowTimer > 0) { this.slowTimer -= dt; if (this.slowTimer <= 0) this.slow = 1; }
 
-    // Attack swing animation
+    // Charge-up pose takes priority over the attack swing: weapon thrust
+    // overhead with a little tremble while power gathers.
     const swing = this._attackAnim > 0 ? Math.sin((1 - this._attackAnim / 0.3) * Math.PI) : 0;
-    this.armGroup.rotation.x = -swing * 2.4;
+    if (this.chargeTimer > 0) {
+      this.chargeTimer -= dt;
+      this.armGroup.rotation.x = 2.6 + Math.sin(performance.now() * 0.05) * 0.12;
+      this.mesh && (this.mesh.rotation.z = Math.sin(performance.now() * 0.06) * 0.03);
+    } else {
+      this.armGroup.rotation.x = -swing * 2.4;
+      if (this.mesh) this.mesh.rotation.z = 0;
+    }
 
     // Walk cycle: swing legs + off-arm, add a little bob
     const t = performance.now() * 0.011;
@@ -271,6 +282,9 @@ export class Player {
   }
 
   triggerAttackAnim() { this._attackAnim = 0.3; }
+
+  /** Hold a charge-up pose for `seconds` (ability cast / Limit Break). */
+  charge(seconds) { this.chargeTimer = Math.max(this.chargeTimer, seconds); }
 
   applyDamage(amount) {
     const reduced = Math.max(1, Math.round(amount * (1 - this.damageReduction)));

@@ -82,9 +82,11 @@ export class Game {
       const scene = this.story.onEnemyDefeated();
       if (scene) { this._setFocus(this.player.position, 'orbit'); this._runCutscene(() => this.story.play(scene)); }
     };
-    // Limit gauge charges ONLY from damaging drones
-    this.combat.onDroneDamage = (dmg) => { this.limit = Math.min(100, this.limit + dmg * 0.9); };
-    this.combat.onLimitStart = () => { this.hud.limitFlash(); this._shake = 0.5; };
+    // Limit gauge charges ONLY from damaging drones (generous — ~1-2 drones fills it)
+    this.combat.onDroneDamage = (dmg) => { this.limit = Math.min(100, this.limit + dmg * 2.4); };
+    this.combat.onLimitStart = () => { this.hud.limitFlash(); this._shake = 0.35; };
+    this.combat.onLimitRelease = () => { this._shake = 0.75; };
+    this._limitReady = false;
     this.combat.onBossPhase = () => this._runCutscene(() => this.story.bossPhaseCallback());
     this.combat.onBossDefeated = () => this._runCutscene(async () => { this.combat.boss = null; await this.story.onBossDefeated(); });
     this.combat.onPlayerDeath = () => this._gameOver();
@@ -163,6 +165,10 @@ export class Game {
     if (this.input.wasPressed('c')) { this._openMenu(); return; }
 
     for (const id in this.cooldowns) if (this.cooldowns[id] > 0) this.cooldowns[id] = Math.max(0, this.cooldowns[id] - dt);
+
+    // Announce when the Limit is ready to fire
+    if (this.limit >= 100 && !this._limitReady) { this._limitReady = true; this.hud.log('⚡ LIMIT READY — press R!', 'crit'); }
+    if (this.limit < 100) this._limitReady = false;
 
     // Dash
     if (this.input.wasPressed('control') || this.input.wasPressed('q')) {

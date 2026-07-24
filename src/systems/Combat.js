@@ -200,8 +200,32 @@ export class Combat {
       if (this.lockTarget || aim.dot(dir) > 0.2) dir = aim;
     }
     dir.y = Math.max(dir.y, -0.05);
+    const color = { fire: 0xff5a1e, ice: 0x5ac8ff, holy: 0x9bffb0, thunder: 0xffe14a, dark: 0xb06bff }[spell.element] || 0xffffff;
+    this.player.charge(0.22);                 // brief wind-up pose
+    this._chargeOrb(color, 0.22, 1.2);        // energy gathers at the blade
     this._castSlash(spell, dir);
     this.projectiles.push(new Projectile(this.scene, spell, origin, dir));
+  }
+
+  /** A gathering energy orb at the hero's blade while an art charges. */
+  _chargeOrb(color, duration, maxScale) {
+    const orb = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95 }));
+    const light = new THREE.PointLight(color, 5, 6, 2);
+    this.scene.add(orb); this.scene.add(light);
+    const t0 = performance.now();
+    const anim = () => {
+      const t = (performance.now() - t0) / (duration * 1000);
+      const pos = this.player.position.clone(); pos.y = 1.5;
+      pos.addScaledVector(new THREE.Vector3(Math.sin(this.player.facing), 0, Math.cos(this.player.facing)), 0.7);
+      orb.position.copy(pos); light.position.copy(pos);
+      if (t >= 1) { this.scene.remove(orb); this.scene.remove(light); orb.geometry.dispose(); orb.material.dispose(); return; }
+      orb.scale.setScalar(0.3 + t * maxScale);
+      orb.material.opacity = 0.95 * (1 - t * 0.4);
+      light.intensity = 5 * (1 - t * 0.3);
+      requestAnimationFrame(anim);
+    };
+    anim();
   }
 
   /** A quick crescent slash-arc in front of the hero when an art is cast. */
@@ -226,17 +250,52 @@ export class Combat {
     anim();
   }
 
-  /** LIMIT BREAK — "OMNI-SURGE": a devastating shockwave around the hero. */
+  /**
+   * LIMIT BREAK — "OMNI-SURGE": the hero powers up (charge-up), an energy
+   * column builds around them, then releases a devastating shockwave.
+   */
   unleashLimit() {
     const p = this.player;
-    p.triggerAttackAnim();
-    if (this.onLimitStart) this.onLimitStart();   // screen flash + camera shake
+    p.charge(0.75);                              // power-up pose
+    if (this.onLimitStart) this.onLimitStart();  // banner + light shake
+    this.hud.log('⚡ CHARGING…', 'crit');
 
-    // Bright core flash
-    const flash = new THREE.PointLight(0xfff2a0, 40, 50, 2);
+    // Rising energy column that swells during the wind-up
+    const colMat = new THREE.MeshBasicMaterial({ color: 0xffe070, transparent: true, opacity: 0, side: THREE.DoubleSide });
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 1.1, 6, 20, 1, true), colMat);
+    this.scene.add(col);
+    const buildLight = new THREE.PointLight(0xffe070, 0, 22, 2);
+    this.scene.add(buildLight);
+
+    const t0 = performance.now();
+    const WIND = 620;   // ms of charge-up
+    const build = () => {
+      const t = (performance.now() - t0) / WIND;
+      col.position.copy(p.position); col.position.y = 3;
+      buildLight.position.copy(p.position); buildLight.position.y = 2;
+      if (t >= 1) {
+        this.scene.remove(col); this.scene.remove(buildLight);
+        col.geometry.dispose(); colMat.dispose();
+        this._limitRelease();
+        return;
+      }
+      const wob = 1 + Math.sin(t * 26) * 0.12;
+      col.scale.set(wob, 1 + t * 0.4, wob);
+      colMat.opacity = 0.55 * t;
+      buildLight.intensity = 22 * t;
+      requestAnimationFrame(build);
+    };
+    build();
+  }
+
+  _limitRelease() {
+    const p = this.player;
+    if (this.onLimitRelease) this.onLimitRelease();   // big shake
+
+    // Core flash
+    const flash = new THREE.PointLight(0xfff2a0, 45, 55, 2);
     flash.position.copy(p.position); flash.position.y = 1.5;
     this.scene.add(flash);
-
     // Expanding ground shockwave ring
     const ringMat = new THREE.MeshBasicMaterial({ color: 0xffe070, transparent: true, opacity: 0.9, side: THREE.DoubleSide });
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.6, 1.3, 40), ringMat);
@@ -252,17 +311,17 @@ export class Combat {
         ring.geometry.dispose(); ringMat.dispose();
         return;
       }
-      flash.intensity = 40 * (1 - t);
-      ring.scale.setScalar(1 + t * 16);
+      flash.intensity = 45 * (1 - t);
+      ring.scale.setScalar(1 + t * 18);
       ringMat.opacity = 0.9 * (1 - t);
       requestAnimationFrame(grow);
     };
     grow();
 
-    const dmg = 90 + this.player.level * 12;   // scales with level
+    const dmg = 90 + this.player.level * 12;
     for (const e of this.all) {
       if (!e.alive) continue;
-      if (e.position.distanceTo(p.position) > 16) continue;
+      if (e.position.distanceTo(p.position) > 17) continue;
       const died = e.takeDamage(dmg);
       this.hud.floatDamage(e.position, dmg, 'crit');
       if (died) this._reward(e);

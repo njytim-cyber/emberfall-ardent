@@ -90,11 +90,25 @@ export class Game {
     this.combat.onLimitRelease = () => { this._shake = 0.75; };
     this._limitReady = false;
     this.combat.onBossPhase = () => this._runCutscene(() => this.story.bossPhaseCallback());
-    this.combat.onBossDefeated = () => this._runCutscene(async () => { this.combat.boss = null; await this.story.onBossDefeated(); });
+    this.combat.onBossDefeated = () => this._runCutscene(async () => {
+      const bossPos = this.combat.boss ? this.combat.boss.position.clone() : this.player.position.clone();
+      this.combat.boss = null;
+      this._setFocus(this.player.position, 'orbit');
+      await this.story.play('boss_flee');
+      // Cade draws from his back and finishes it — a decisive slash
+      this.player.inCombat = true;
+      this.player.braver(Math.atan2(bossPos.x - this.player.position.x, bossPos.z - this.player.position.z));
+      this.combat._braverSlash(0xff5a1e);
+      this._shake = 0.6;
+      await new Promise((r) => setTimeout(r, 850));
+      await this.story.onBossDefeated();       // grants Omnislash + plays the ending
+    });
     this.combat.onPlayerDeath = () => this._gameOver();
-    // A new group of enemies appears
-    this.combat.onWave = (wave) => this.hud.log(
-      wave.tag === 'forest' ? '🌿 Corrupted guardians block the path!' : '🚨 Helix security moves in!', 'crit');
+    // A new group of enemies appears — auto lock-on to it
+    this.combat.onWave = (wave) => {
+      this.hud.log(wave.tag === 'forest' ? '🌿 Corrupted guardians block the path!' : '🚨 Helix security moves in!', 'crit');
+      this.combat.acquireLock();
+    };
     this._shake = 0;
 
     // --- NPCs: Rae (contact) + Doc (always-open vendor) ---
@@ -152,6 +166,7 @@ export class Game {
     }
 
     this.hud.update(this.player, this._cdFractions(), { limit: this.limit, lock: this.combat.lockTarget });
+    if (this.mobile) this.mobile.setAbilities(this.player.loadout);
 
     // Camera shake (Limit Break / big hits)
     if (this._shake > 0) {

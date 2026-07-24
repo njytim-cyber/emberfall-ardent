@@ -5,6 +5,8 @@
    Feeds the shared Input object the same way keyboard/mouse do.
    ============================================================ */
 
+import { SPELLS_BY_ID } from '../data/spells.js';
+
 export class MobileControls {
   constructor(input) {
     this.input = input;
@@ -12,6 +14,19 @@ export class MobileControls {
     this._joyId = null;
     this._lookId = null;
     this._lookLast = null;
+    this._abilitySig = '';
+  }
+
+  /** Show the equipped ability icons on the three ability buttons. */
+  setAbilities(loadout) {
+    const sig = loadout.join('|');
+    if (sig === this._abilitySig) return;
+    this._abilitySig = sig;
+    ['a1', 'a2', 'a3'].forEach((cls, i) => {
+      const btn = this.root.querySelector('.' + cls);
+      const sp = loadout[i] ? SPELLS_BY_ID[loadout[i]] : null;
+      btn.querySelector('.tb-ico').textContent = sp ? sp.icon : '·';
+    });
   }
 
   _build() {
@@ -21,15 +36,15 @@ export class MobileControls {
       <div id="look-zone"></div>
       <div id="joystick"><div class="joy-base"><div class="joy-knob"></div></div></div>
       <div id="touch-buttons">
-        <button class="tbtn atk" data-key="mouse0">⚔</button>
-        <button class="tbtn a1" data-key=",">,</button>
-        <button class="tbtn a2" data-key=".">.</button>
-        <button class="tbtn a3" data-key="/">/</button>
-        <button class="tbtn dash" data-key="q">⟫</button>
-        <button class="tbtn lock" data-key="mouse2">🎯</button>
-        <button class="tbtn limit" data-key="r">💥</button>
+        <button class="tbtn atk" data-key="mouse0"><span class="tb-ico">⚔️</span></button>
+        <button class="tbtn a1" data-key=","><span class="tb-ico">✦</span><span class="tb-lbl">1</span></button>
+        <button class="tbtn a2" data-key="."><span class="tb-ico">✦</span><span class="tb-lbl">2</span></button>
+        <button class="tbtn a3" data-key="/"><span class="tb-ico">✦</span><span class="tb-lbl">3</span></button>
+        <button class="tbtn dash" data-key="q"><span class="tb-ico">🌀</span><span class="tb-lbl">ROLL</span></button>
+        <button class="tbtn lock" data-key="mouse2"><span class="tb-ico">◎</span><span class="tb-lbl">LOCK</span></button>
+        <button class="tbtn limit" data-key="r"><span class="tb-ico">💥</span><span class="tb-lbl">LIMIT</span></button>
       </div>
-      <button id="touch-menu" class="tbtn" data-key="c">☰</button>`;
+      <button id="touch-menu" class="tbtn" data-key="c"><span class="tb-ico">☰</span></button>`;
     document.body.appendChild(root);
     this.root = root;
 

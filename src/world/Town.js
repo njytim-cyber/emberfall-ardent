@@ -75,8 +75,52 @@ export class Town {
           this._tree(x, z + (Math.random() - 0.5) * 5);
         }
       }
-      if (Math.random() < 0.5) this._mushroom((Math.random() - 0.5) * W.streetHalfWidth * 1.7, z);
+      // Natural scatter along the path: rocks, ferns, glow-mushrooms, the odd fallen log
+      const roll = Math.random();
+      const px = (Math.random() - 0.5) * W.streetHalfWidth * 1.85;
+      if (roll < 0.35) this._rock(px, z);
+      else if (roll < 0.6) this._fern(px, z);
+      else if (roll < 0.78) this._mushroom(px, z);
+      else if (roll < 0.86) this._log()(px, z);
     }
+  }
+
+  _rock(x, z) {
+    const g = new THREE.Group(); g.position.set(x, 0, z);
+    const n = 1 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < n; i++) {
+      const s = 0.4 + Math.random() * 0.9;
+      const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0),
+        this._mat(0x5a5d63, { roughness: 1, metalness: 0.05 }));
+      rock.position.set((Math.random() - 0.5) * 1.2, s * 0.5, (Math.random() - 0.5) * 1.2);
+      rock.rotation.set(Math.random(), Math.random(), Math.random());
+      rock.castShadow = rock.receiveShadow = true; g.add(rock);
+    }
+    this.group.add(g);
+    this.obstacles.push({ type: 'circle', x, z, r: 0.7 });
+  }
+
+  _fern(x, z) {
+    const g = new THREE.Group(); g.position.set(x, 0, z);
+    const leaf = this._mat(0x2f5a2c, { roughness: 0.9 });
+    for (let i = 0; i < 5; i++) {
+      const a = (i / 5) * Math.PI * 2;
+      const frond = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.8, 4), leaf);
+      frond.position.set(Math.cos(a) * 0.18, 0.4, Math.sin(a) * 0.18);
+      frond.rotation.set(0.5 * Math.cos(a), a, 0.5 * Math.sin(a)); g.add(frond);
+    }
+    this.group.add(g);
+  }
+
+  _log() {
+    return (x, z) => {
+      const log = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 3 + Math.random() * 2, 8),
+        this._mat(0x3a2e22, { roughness: 1 }));
+      log.rotation.z = Math.PI / 2; log.rotation.y = Math.random() * Math.PI;
+      log.position.set(x, 0.35, z); log.castShadow = log.receiveShadow = true;
+      this.group.add(log);
+      this.obstacles.push({ type: 'circle', x, z, r: 0.8 });
+    };
   }
 
   _tree(x, z) {

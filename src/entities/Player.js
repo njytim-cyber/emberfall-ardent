@@ -145,18 +145,53 @@ export class Player {
     g.add(lArm);
     this.leftArm = lArm;
 
-    // --- Right arm swings on attack; holds a sword ---
+    // --- Right arm swings on attack; holds the drawn sword ---
     this.armGroup = makeArm(1);
-    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.1, 0.02), steel);
-    blade.position.set(0, -1.2, 0.05); blade.castShadow = true; this.armGroup.add(blade);
-    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.06, 0.06),
-      new THREE.MeshStandardMaterial({ color: 0xd4a017, metalness: 0.8, roughness: 0.3 }));
-    guard.position.set(0, -0.72, 0.05); this.armGroup.add(guard);
+    this.heldSword = this._makeSword();
+    this.heldSword.position.set(0, -0.72, 0.06);   // hilt at the hand, blade pointing down
+    this.heldSword.visible = false;                 // sheathed until combat
+    this.armGroup.add(this.heldSword);
     g.add(this.armGroup);
+
+    // --- Sword sheathed across the back when not fighting ---
+    this.backSword = this._makeSword();
+    this.backSword.scale.setScalar(0.98);
+    this.backSword.position.set(-0.16, 1.5, -0.32);
+    this.backSword.rotation.set(0.2, 0, Math.PI * 0.72);   // slung diagonally
+    g.add(this.backSword);
+    this.inCombat = false;
 
     this.mesh = g;
     this.mesh.position.copy(this.position);
     this.scene.add(g);
+  }
+
+  /** A detailed longsword: tapered blade with a fuller, crossguard, wrapped grip, pommel. */
+  _makeSword() {
+    const s = new THREE.Group();
+    const steel = new THREE.MeshStandardMaterial({ color: 0xd7dbe4, roughness: 0.22, metalness: 0.95 });
+    const edge = new THREE.MeshStandardMaterial({ color: 0xeef2f8, roughness: 0.1, metalness: 1 });
+    const gold = new THREE.MeshStandardMaterial({ color: 0xd4a017, roughness: 0.3, metalness: 0.85 });
+    const grip = new THREE.MeshStandardMaterial({ color: 0x3a2a1a, roughness: 0.85 });
+
+    // Blade (tapers to a point) + a bright fuller line
+    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.11, 1.25, 0.035), steel);
+    blade.position.y = -0.62; blade.castShadow = true; s.add(blade);
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.22, 4), steel);
+    tip.position.y = -1.32; tip.rotation.y = Math.PI / 4; s.add(tip);
+    const fuller = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.1, 0.045), edge);
+    fuller.position.y = -0.62; s.add(fuller);
+    // Crossguard
+    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.07, 0.09), gold);
+    guard.position.y = 0.02; s.add(guard);
+    const guardKnobL = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), gold); guardKnobL.position.set(-0.21, 0.02, 0); s.add(guardKnobL);
+    const guardKnobR = new THREE.Mesh(new THREE.SphereGeometry(0.05, 8, 8), gold); guardKnobR.position.set(0.21, 0.02, 0); s.add(guardKnobR);
+    // Wrapped grip + pommel
+    const gripMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.34, 8), grip);
+    gripMesh.position.y = 0.22; s.add(gripMesh);
+    const pommel = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 10), gold);
+    pommel.position.y = 0.42; s.add(pommel);
+    return s;
   }
 
   // ---------------------------------------------------------
@@ -255,6 +290,14 @@ export class Player {
     this.mesh.rotation.y = this.facing;
     // Dodge-roll: tumble forward through the roll
     this.mesh.rotation.x = this.dashTimer > 0 ? (1 - this.dashTimer / 0.34) * Math.PI * 2 : 0;
+
+    // Draw the sword when combat starts; sheathe it on the back when it ends
+    if (this.inCombat !== this._wasInCombat) {
+      this._wasInCombat = this.inCombat;
+      if (this.inCombat) this.triggerAttackAnim();     // quick draw flourish
+    }
+    if (this.heldSword) this.heldSword.visible = this.inCombat;
+    if (this.backSword) this.backSword.visible = !this.inCombat;
 
     this._updateCamera(dt);
   }

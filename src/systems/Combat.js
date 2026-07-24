@@ -80,6 +80,7 @@ export class Combat {
   /** Keep the player behind the current group, or inside the boss arena. */
   _applyBarriers() {
     const W = CONFIG.world;
+    this.player.inCombat = this.livingCount > 0 || !!(this.boss && this.boss.alive);
     if (this.boss && this.boss.alive) {
       this.player.frontLineZ = W.endZ + 4;
       this.player.arenaBackZ = W.plazaZ + 22;      // sealed in the plaza arena
@@ -379,6 +380,9 @@ export class Combat {
   _limitRelease() {
     const p = this.player;
     if (this.onLimitRelease) this.onLimitRelease();   // big shake
+    // …then the hero explodes out of the pose with a leaping strike
+    p.braver(p.facing);
+    this._braverSlash(0xffe070);
 
     // Core flash
     const flash = new THREE.PointLight(0xfff2a0, 45, 55, 2);
@@ -482,6 +486,9 @@ export class Combat {
     this.player.inventory.gold += e.type.gold || 0;
     this.hud.log(`${e.type.name} slain! +${e.type.xp} XP`, 'system');
     if (leveled) { this.hud.log(`LEVEL UP! You are now level ${this.player.level}`, 'crit'); this.hud.flashLevelUp?.(); }
+
+    // If the locked foe fell, snap lock-on to the next in the group
+    if (e === this.lockTarget) this.acquireLock();
 
     if (e.isBoss) { this.onBossDefeated?.(e); }
     else { this.onEnemyDefeated?.(e); }

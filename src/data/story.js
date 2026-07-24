@@ -92,6 +92,13 @@ export const SCENES = {
 
   boss_phase: [{ speaker: 'President Vance', portrait: '👔', text: 'You think this HURTS me? EMP surge — freeze where you stand, and watch your precious wood go dark for good!', mood: 'boss' }],
 
+  boss_flee: [
+    { speaker: 'President Vance', portrait: '👔', text: 'Enough. Enough! This is— this is a ROUT. Security! Get me to the roof, get me the lift, get me—', mood: 'boss' },
+    { speaker: 'Narrator', portrait: '🏃', text: 'His blades sputter out. Vance turns on his heel and bolts for a waiting executive lift.', mood: 'dark' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Oh no you don\'t.', mood: 'hero' },
+    { speaker: 'Narrator', portrait: '⚔️', text: 'Cade rips the blade from his back in a single motion and closes the distance in a heartbeat.', mood: 'dark' },
+  ],
+
   true_ending: [
     { speaker: 'President Vance', portrait: '💥', text: 'No… the grid… the city needs… ME. Without me they\'re back in the DARK…', mood: 'boss' },
     { speaker: 'Cade (You)', portrait: '🕶️', text: 'No, Vance. They just needed you gone. There was always another way to keep the lights on. You just never looked for it.', mood: 'hero' },

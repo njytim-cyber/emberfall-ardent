@@ -190,3 +190,58 @@
 .tbtn.lock  { right: 158px; bottom: 4px; width: 52px; height: 52px; font-size: 1.2rem; }
 .tbtn.limit { right: 62px;  bottom: 122px; width: 56px; height: 56px; background: linear-gradient(180deg, #ffe070, #d4831f); }
 #touch-menu { position: absolute; top: 18px; right: 18px; width: 50px; height: 50px; font-size: 1.4rem; pointer-events: auto; }
+
+/* ============================================================
+   Phase 1 additions: big damage numbers, ATB bar, boss bar,
+   settings panel
+   ============================================================ */
+
+/* Bigger, punchier floating damage numbers */
+.float-dmg { font-size: 1.9rem; font-weight: 900; text-shadow: 0 2px 5px rgba(0,0,0,0.95); }
+.float-dmg.enemy-hit { color: #ffe6a0; font-size: 2.1rem; }
+.float-dmg.player-hit { color: #ff3b30; font-size: 2.5rem; }
+.float-dmg.crit { color: #ffd400; font-size: 3rem; }
+.float-dmg.heal { color: #46f08a; font-size: 2.1rem; }
+.float-dmg.mp { color: #7ad0ff; }
+
+/* ATB gauge colouring (gold energy) */
+.bar.atb-bar .bar-fill { background: linear-gradient(180deg, #ffe070, #d49a1f) !important; box-shadow: 0 0 12px rgba(255,210,80,0.4); }
+
+/* Boss health bar */
+#boss-bar {
+  position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+  width: min(560px, 82vw); text-align: center;
+}
+#boss-bar .bb-name {
+  font-family: var(--font); font-weight: 800; letter-spacing: 0.12rem;
+  color: #ff8b7b; text-shadow: 0 2px 6px #000; margin-bottom: 4px; font-size: 1.05rem;
+}
+#boss-bar .bb-track {
+  height: 16px; background: rgba(0,0,0,0.7);
+  border: 2px solid rgba(255,80,60,0.6); border-radius: 6px; overflow: hidden;
+  box-shadow: 0 0 16px rgba(255,60,50,0.4);
+}
+#boss-bar .bb-fill {
+  height: 100%; width: 100%;
+  background: linear-gradient(180deg, #ff5b4b, #7a1a10);
+  transition: width 0.2s ease;
+}
+
+/* Settings gear + panel */
+#settings-btn {
+  position: absolute; top: 16px; right: 16px;
+  width: 44px; height: 44px; font-size: 1.4rem; padding: 0;
+  border-radius: 50%; pointer-events: auto; box-shadow: none;
+}
+#settings-panel {
+  position: absolute; top: 66px; right: 16px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 16px; pointer-events: auto; width: 230px;
+}
+#settings-panel label { display: block; color: #e0d8c4; font-size: 0.9rem; margin-bottom: 8px; }
+#settings-panel label b { color: #ffe0a0; }
+#settings-panel input[type="range"] { width: 100%; }
+
+/* Joystick run-toggle indicator */
+#joystick.running .joy-base { border-color: #ffe070; box-shadow: 0 0 16px rgba(255,224,112,0.8); }
+#joystick.running .joy-knob { background: rgba(255,224,112,0.7); }

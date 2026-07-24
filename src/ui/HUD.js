@@ -79,6 +79,52 @@ export class HUD {
     this.limitFx.className = 'hidden';
     this.limitFx.innerHTML = '<div class="lf-flash"></div><div class="lf-banner">LIMIT BREAK</div>';
     this.el.hud.appendChild(this.limitFx);
+
+    // Boss health bar (top center)
+    this.bossBar = document.createElement('div');
+    this.bossBar.id = 'boss-bar';
+    this.bossBar.className = 'hidden';
+    this.bossBar.innerHTML = '<div class="bb-name"></div><div class="bb-track"><div class="bb-fill"></div></div>';
+    this.el.hud.appendChild(this.bossBar);
+    this.bbName = this.bossBar.querySelector('.bb-name');
+    this.bbFill = this.bossBar.querySelector('.bb-fill');
+
+    // Settings (sensitivity) — gear button + panel, pointer-events on
+    this.settingsBtn = document.createElement('button');
+    this.settingsBtn.id = 'settings-btn';
+    this.settingsBtn.textContent = '⚙';
+    this.el.hud.appendChild(this.settingsBtn);
+    this.settingsPanel = document.createElement('div');
+    this.settingsPanel.id = 'settings-panel';
+    this.settingsPanel.className = 'hidden';
+    this.settingsPanel.innerHTML =
+      '<label>Look sensitivity <b class="sens-val"></b></label>' +
+      '<input id="sens-slider" type="range" min="0.3" max="2.6" step="0.05">';
+    this.el.hud.appendChild(this.settingsPanel);
+    this._wireSettings();
+  }
+
+  _wireSettings() {
+    this.settingsBtn.addEventListener('click', () => this.settingsPanel.classList.toggle('hidden'));
+    const slider = this.settingsPanel.querySelector('#sens-slider');
+    const val = this.settingsPanel.querySelector('.sens-val');
+    this.onSensChange = null;
+    const initial = parseFloat(localStorage.getItem('emberfall_sens')) || 1;
+    slider.value = initial; val.textContent = initial.toFixed(2);
+    slider.addEventListener('input', () => {
+      const v = parseFloat(slider.value);
+      val.textContent = v.toFixed(2);
+      localStorage.setItem('emberfall_sens', String(v));
+      if (this.onSensChange) this.onSensChange(v);
+    });
+  }
+
+  /** Show/hide the boss health bar. */
+  updateBossBar(boss) {
+    if (!boss || !boss.alive) { this.bossBar.classList.add('hidden'); return; }
+    this.bossBar.classList.remove('hidden');
+    this.bbName.textContent = boss.type.name;
+    this.bbFill.style.width = `${Math.max(0, (boss.health / boss.maxHealth) * 100)}%`;
   }
 
   /** Full-screen flash + banner when the Limit Break fires. */

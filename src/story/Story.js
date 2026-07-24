@@ -51,10 +51,11 @@ export class Story {
   objective() {
     const f = this.flags;
     if (f.complete) return 'Ardent & the Emberwood are free. (Free roam)';
-    if (f.bossSpawned) return 'Ch.4 — Take down President Vance!';
-    if (f.avenueReached) return 'Ch.3 · Reach the plaza and confront Vance.';
-    if (f.cityReached) return `Ch.2 · Fight up Vance Avenue · takedowns: ${f.kills}`;
-    if (f.introSeen) return `Ch.1 · Push through the Emberwood · takedowns: ${f.kills}`;
+    if (f.bossSpawned) return 'Ch.5 — Take down President Vance!';
+    if (f.avenueReached) return `Ch.4 · Fight to the plaza · takedowns: ${f.kills}`;
+    if (f.cityReached) return `Ch.3 · Breach the city gate · takedowns: ${f.kills}`;
+    if (f.forestMidShown) return `Ch.2 · Cross the blighted edge · takedowns: ${f.kills}`;
+    if (f.introSeen) return `Ch.1 · Push through the deep wood · takedowns: ${f.kills}`;
     return 'Wake, warden…';
   }
 
@@ -67,21 +68,23 @@ export class Story {
     }
   }
 
-  // ---- Chapter 1: the Emberwood ----
+  // ---- Chapter 1: the deep wood ----
   async reachOmen() { if (this.flags.forestOmenShown) return; this.flags.forestOmenShown = true; await this.play('forest_omen'); }
-  async reachForestMid() { if (this.flags.forestMidShown) return; this.flags.forestMidShown = true; await this.play('forest_mid'); }
 
-  // ---- Chapter 2: the city gate ----
-  async reachCity() { if (this.flags.cityReached) return; this.flags.cityReached = true; this.flags.chapter = 2; await this.play('chapter2'); }
+  // ---- Chapter 2: the blighted edge ----
+  async reachForestMid() { if (this.flags.forestMidShown) return; this.flags.forestMidShown = true; this.flags.chapter = 2; await this.play('forest_mid'); }
+
+  // ---- Chapter 3: the city gate ----
+  async reachCity() { if (this.flags.cityReached) return; this.flags.cityReached = true; this.flags.chapter = 3; await this.play('chapter2'); }
   async reachCityMid() { if (this.flags.cityMidShown) return; this.flags.cityMidShown = true; await this.play('city_mid'); }
 
-  // ---- Chapter 3: the avenue ----
-  async reachAvenue() { if (this.flags.avenueReached) return; this.flags.avenueReached = true; this.flags.chapter = 3; await this.play('chapter3'); }
+  // ---- Chapter 4: the avenue ----
+  async reachAvenue() { if (this.flags.avenueReached) return; this.flags.avenueReached = true; this.flags.chapter = 4; await this.play('chapter3'); }
   async reachPreBoss() { if (this.flags.preBossShown) return; this.flags.preBossShown = true; await this.play('pre_boss'); }
 
-  // ---- Chapter 4: the plaza / boss ----
+  // ---- Chapter 5: the plaza / boss ----
   canFightBoss() { return this.flags.avenueReached && !this.flags.bossSpawned && !this.flags.complete; }
-  async spawnBoss() { await this.play('boss_appear'); this.flags.chapter = 4; this.flags.bossSpawned = true; }
+  async spawnBoss() { await this.play('boss_appear'); this.flags.chapter = 5; this.flags.bossSpawned = true; }
   bossPhaseCallback = async () => { await this.play('boss_phase'); };
 
   async onBossDefeated() {

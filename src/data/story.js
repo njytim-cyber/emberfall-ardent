@@ -38,6 +38,7 @@ export const SCENES = {
   ],
 
   forest_mid: [
+    { speaker: 'Narrator', portrait: '📻', text: 'CHAPTER 2 — THE BLIGHTED EDGE', mood: 'dark' },
     { speaker: 'Rae', portrait: '🧑‍🚀', text: 'You\'re past the deep grove. Feel that? The air\'s colder — the sickness is thickest up ahead, closest to the drain.' },
     { speaker: 'Cade (You)', portrait: '🕶️', text: 'The wisps are worse here. They used to lead travelers home. Now they burn.', mood: 'hero' },
     { speaker: 'Rae', portrait: '🧑‍🚀', text: 'The corruption drives them. Put them down gently as you can and keep pushing — the tree line ends just ahead. That\'s where the wood becomes their city.' },
@@ -52,7 +53,7 @@ export const SCENES = {
     { speaker: 'Nyx', portrait: '👩‍💻', text: 'Straight down Vance Avenue to the central plaza. That\'s where SUNSET runs, that\'s where the drain terminates, and that\'s where Vance holds court like it\'s a throne room.' },
     { speaker: 'Nyx', portrait: '👩‍💻', text: 'Bad news: the whole avenue is a Helix security gauntlet — grunts, recon drones, riot troopers, and worse the closer you get. Good news: I can thin their firewalls as you go.' },
     { speaker: 'Rae', portrait: '🧑‍🚀', text: 'The wood is counting on you, Cade. Every second we talk, another tree goes dark. Get through that city.' },
-    { speaker: 'Narrator', portrait: '📻', text: 'CHAPTER 2 — THE CITY GATE', mood: 'dark' },
+    { speaker: 'Narrator', portrait: '📻', text: 'CHAPTER 3 — THE CITY GATE', mood: 'dark' },
   ],
 
   city_mid: [
@@ -63,7 +64,7 @@ export const SCENES = {
 
   // ================= CHAPTER 3 — Vance Avenue =================
   chapter3: [
-    { speaker: 'Narrator', portrait: '📻', text: 'CHAPTER 3 — VANCE AVENUE', mood: 'dark' },
+    { speaker: 'Narrator', portrait: '📻', text: 'CHAPTER 4 — VANCE AVENUE', mood: 'dark' },
     { speaker: 'President Vance', portrait: '👔', text: 'So the forest sent a champion. How quaint. I\'ve watched you carve through my androids on forty cameras, warden. You have my attention.', mood: 'boss' },
     { speaker: 'Cade (You)', portrait: '🕶️', text: 'Cut the drain-line, Vance. Give the wood back its heart, and I\'ll walk out of your city.', mood: 'hero' },
     { speaker: 'President Vance', portrait: '👔', text: 'That "heart" is the cleanest, cheapest, most reliable power this city has ever had. Do you know what light cost the people of Ardent before me? Everything.', mood: 'boss' },
@@ -85,8 +86,8 @@ export const SCENES = {
     { speaker: 'Cade (You)', portrait: '🕶️', text: 'You\'re bleeding something ancient to death to charge a battery, and you call the WOOD wasteful.', mood: 'hero' },
     { speaker: 'President Vance', portrait: '👔', text: 'I\'m killing nothing. I\'m making it USEFUL — something your precious order never managed in a thousand years of standing around in the trees.', mood: 'boss' },
     { speaker: 'Cade (You)', portrait: '🕶️', text: 'We kept it ALIVE. That was the point. That was always the point.', mood: 'hero' },
-    { speaker: 'Narrator', portrait: '🦿', text: 'Servos scream as an executive combat exosuit unfolds and seals around Vance — Helix\'s last, best weapon.', mood: 'dark' },
-    { speaker: 'President Vance', portrait: '👔', text: 'CHAPTER 4 — I built this city with my hands, warden. I will not be unmade by a gardener with a sword. Come. Let me show you real power.', mood: 'boss' },
+    { speaker: 'Narrator', portrait: '⚡', text: 'Vance sets down his tablet and rolls his cuffs. Twin blades of hard light ignite from his sleeves — Helix executive-protection, the priciest bodyguard money can buy, worn like a watch.', mood: 'dark' },
+    { speaker: 'President Vance', portrait: '👔', text: 'CHAPTER 5 — I built this city with these hands, warden. I will not be unmade by a gardener with a sword. Come. Let me show you what real power costs.', mood: 'boss' },
   ],
 
   boss_phase: [{ speaker: 'President Vance', portrait: '👔', text: 'You think this HURTS me? EMP surge — freeze where you stand, and watch your precious wood go dark for good!', mood: 'boss' }],

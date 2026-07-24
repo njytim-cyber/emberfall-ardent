@@ -272,3 +272,63 @@
 
 /* Battle floating numbers reuse .float-dmg from style.css; add MP colour */
 .float-dmg.mp { color: #5aa9ff; }
+
+/* ============================================================
+   Comms-feed cutscene portrait (holographic "video call")
+   ============================================================ */
+.cutscene-portrait.comms {
+  position: relative;
+  flex: 0 0 120px;
+  height: 120px;
+  border: 2px solid rgba(120, 220, 255, 0.6);
+  border-radius: 12px;
+  background: radial-gradient(ellipse at 50% 40%, rgba(40, 90, 130, 0.55), rgba(6, 14, 22, 0.9));
+  box-shadow: 0 0 18px rgba(90, 200, 255, 0.35), inset 0 0 24px rgba(90, 200, 255, 0.25);
+  overflow: hidden;
+}
+.cutscene-box[data-mood="boss"] .cutscene-portrait.comms { border-color: rgba(255, 90, 80, 0.7); box-shadow: 0 0 18px rgba(255,80,70,0.4), inset 0 0 24px rgba(255,80,70,0.25); }
+.cutscene-box[data-mood="hero"] .cutscene-portrait.comms { border-color: rgba(120, 200, 255, 0.7); }
+
+.comms-face {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3.6rem;
+  filter: drop-shadow(0 0 6px rgba(120,220,255,0.5));
+  transform-origin: 50% 70%;
+}
+.comms.talking .comms-face { animation: commsTalk 0.28s ease-in-out infinite; }
+@keyframes commsTalk {
+  0%,100% { transform: scale(1, 1) translateY(0); }
+  50% { transform: scale(1.02, 0.94) translateY(1px); }
+}
+
+/* moving scanline */
+.comms-scan {
+  position: absolute; left: 0; right: 0; height: 26%;
+  background: linear-gradient(180deg, transparent, rgba(150, 230, 255, 0.18), transparent);
+  animation: commsScan 2.6s linear infinite;
+}
+@keyframes commsScan { 0% { top: -30%; } 100% { top: 100%; } }
+
+/* voice / mouth waveform bars */
+.comms-wave {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: flex-end; gap: 3px; height: 16px; opacity: 0.35;
+}
+.comms-wave i { width: 3px; height: 4px; background: #8fe6ff; border-radius: 2px; }
+.comms.talking .comms-wave { opacity: 0.95; }
+.comms.talking .comms-wave i { animation: commsWave 0.5s ease-in-out infinite; }
+.comms.talking .comms-wave i:nth-child(2) { animation-delay: 0.1s; }
+.comms.talking .comms-wave i:nth-child(3) { animation-delay: 0.2s; }
+.comms.talking .comms-wave i:nth-child(4) { animation-delay: 0.15s; }
+.comms.talking .comms-wave i:nth-child(5) { animation-delay: 0.05s; }
+@keyframes commsWave { 0%,100% { height: 4px; } 50% { height: 15px; } }
+.cutscene-box[data-mood="boss"] .comms-wave i { background: #ff9b8b; }
+
+.comms-live {
+  position: absolute; top: 5px; left: 7px;
+  font-size: 0.55rem; letter-spacing: 0.08rem; font-weight: 700; color: #7bff9b;
+  text-shadow: 0 0 4px rgba(0,0,0,0.8);
+}
+.comms-live { animation: commsBlink 1.4s steps(1) infinite; }
+@keyframes commsBlink { 0%,60% { opacity: 1; } 61%,100% { opacity: 0.3; } }

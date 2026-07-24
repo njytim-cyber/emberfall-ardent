@@ -12,6 +12,8 @@ export class Input {
     this.locked = false;
     this.touchAxis = { x: 0, z: 0 };   // set by MobileControls
     this._touchSprint = false;
+    this._runToggle = false;           // toggled by tapping the joystick
+    this.lookSens = parseFloat(localStorage.getItem('emberfall_sens')) || 1;
 
     // one-shot buffers (consumed by systems, then cleared each frame)
     this.pressed = new Set();
@@ -62,7 +64,7 @@ export class Input {
     const k = (this.isDown('s') ? 1 : 0) - (this.isDown('w') ? 1 : 0);
     return k !== 0 ? k : (this.touchAxis ? this.touchAxis.z : 0);
   }
-  get sprinting() { return this.isDown('shift') || this._touchSprint; }
+  get sprinting() { return this.isDown('shift') || this._touchSprint || this._runToggle; }
 
   /** Called by mobile controls to simulate a key press for one frame. */
   press(key) { this.pressed.add(key); }

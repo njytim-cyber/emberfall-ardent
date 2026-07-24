@@ -73,6 +73,7 @@ export class Enemy {
     else if (this.body === 'mech') this._buildMech(g);
     else if (this.body === 'ent') this._buildEnt(g);
     else if (this.body === 'wisp') this._buildWisp(g);
+    else if (this.body === 'suit') this._buildSuit(g);
     else this._buildHumanoid(g);
 
     g.scale.setScalar(t.scale);
@@ -138,6 +139,52 @@ export class Enemy {
       g.add(rotor);
       this._rotors.push(rotor);
     }
+  }
+
+  /** Shinra-style executive: dark suit, white shirt, red tie, slick hair, stern glare. */
+  _buildSuit(g) {
+    const suit = this.baseMat;                                   // dark charcoal
+    const skin = new THREE.MeshStandardMaterial({ color: 0xd9b08a, roughness: 0.6 });
+    const shirt = new THREE.MeshStandardMaterial({ color: 0xece8e0, roughness: 0.7 });
+    const tie = new THREE.MeshStandardMaterial({ color: 0x9c1f27, roughness: 0.5 });
+    const hair = new THREE.MeshStandardMaterial({ color: 0x3a3a3a, roughness: 0.7 });
+
+    // Broad-shouldered suited torso
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.5, 0.85, 6, 12), suit);
+    torso.position.y = 1.35; torso.castShadow = true; g.add(torso);
+    const shoulders = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.4, 0.6), suit);
+    shoulders.position.y = 1.75; shoulders.castShadow = true; g.add(shoulders);
+    // Shirt V + tie down the front
+    const vee = new THREE.Mesh(new THREE.ConeGeometry(0.28, 0.7, 3), shirt);
+    vee.position.set(0, 1.5, 0.44); vee.rotation.x = Math.PI; g.add(vee);
+    const tieMesh = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.7, 0.06), tie);
+    tieMesh.position.set(0, 1.4, 0.5); g.add(tieMesh);
+
+    // Head with slicked-back hair and hard red eyes
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 18, 18), skin);
+    head.scale.set(0.95, 1.05, 0.95); head.position.y = 2.15; head.castShadow = true; g.add(head);
+    const slick = new THREE.Mesh(new THREE.SphereGeometry(0.31, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), hair);
+    slick.position.y = 2.2; g.add(slick);
+    for (const sx of [-0.11, 0.11]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), this._eyeMat);
+      eye.position.set(sx, 2.16, 0.27); g.add(eye);
+    }
+    // Arms + hands
+    for (const sx of [-0.62, 0.62]) {
+      const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.16, 0.7, 4, 8), suit);
+      arm.position.set(sx, 1.35, 0); arm.castShadow = true; g.add(arm);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.11, 8, 8), skin);
+      hand.position.set(sx, 0.9, 0); g.add(hand);
+    }
+    // Trouser legs + shoes
+    for (const sx of [-0.24, 0.24]) {
+      const leg = new THREE.Mesh(new THREE.CapsuleGeometry(0.2, 0.75, 4, 8), suit);
+      leg.position.set(sx, 0.45, 0); leg.castShadow = true; g.add(leg);
+      const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.14, 0.42), new THREE.MeshStandardMaterial({ color: 0x111, roughness: 0.4 }));
+      shoe.position.set(sx, 0.05, 0.08); g.add(shoe);
+    }
+    // Menacing under-glow
+    const light = new THREE.PointLight(this._eyeColor, 3, 8, 2); light.position.y = 1.6; g.add(light);
   }
 
   /** Corrupted Ent: a walking tree — bark trunk, glowing eyes, branch arms, leafy crown. */

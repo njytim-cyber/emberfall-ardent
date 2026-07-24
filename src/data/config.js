@@ -6,17 +6,17 @@
 export const CONFIG = {
   // --- Player ---
   player: {
-    maxHealth: 120,
-    maxMana: 100,
-    manaRegen: 6,        // mana per second
+    maxHealth: 140,
+    maxMana: 100,        // this is now the ATB gauge
+    manaRegen: 16,       // ATB per second (fills the gauge fast)
     healthRegen: 1.5,    // health per second (slow)
     moveSpeed: 7,        // units per second
     sprintMultiplier: 1.7,
     turnSpeed: 3.2,
-    meleeDamage: 18,
-    meleeRange: 3.2,
-    meleeCooldown: 0.55, // seconds
-    critChance: 0.15,
+    meleeDamage: 26,     // hits harder — good for mashing
+    meleeRange: 3.4,
+    meleeCooldown: 0.32, // fast — spammable
+    critChance: 0.18,
     critMultiplier: 2.0,
     radius: 0.5,
     eyeHeight: 1.7,
@@ -39,11 +39,12 @@ export const CONFIG = {
     leashRange: 30,      // gives up and returns home beyond this
   },
 
-  // --- World: a linear journey — mystical forest → city → plaza ---
+  // --- World: a long journey — deep forest → blighted edge → city → plaza ---
   world: {
     streetHalfWidth: 12,       // walkable half-width of the path/street
     plazaHalfWidth: 22,        // wider open area at the boss plaza
-    startZ: 100,               // spawn: deep in the Emberwood
+    startZ: 180,               // spawn: deep in the Emberwood (long forest)
+    forestMidZ: 90,            // deep wood → blighted edge (chapter beat)
     forestEndZ: 4,             // the wood gives way to the city gate here
     endZ: -156,                // far end (behind the boss plaza)
     plazaZ: -150,              // where President Vance waits

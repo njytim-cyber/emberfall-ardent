@@ -77,6 +77,7 @@ export class Game {
     this.story.onSpellLearned = (spell) => this.hud.log(`Acquired ${spell.icon} ${spell.name}!`, 'crit');
     this.menu.onClose = () => { this.state = 'explore'; this._lock(); };
     this.shop.onClose = () => { this.state = 'explore'; this._lock(); };
+    this.hud.onSensChange = (v) => { this.input.lookSens = v; };
 
     // Takedowns tally + may trigger a chapter cutscene
     this.combat.onEnemyDefeated = () => {
@@ -213,11 +214,11 @@ export class Game {
     const f = this.story.flags;
     const W = CONFIG.world;
     const beats = [
-      [z <= 60 && !f.forestOmenShown, () => this.story.reachOmen()],
-      [z <= 26 && !f.forestMidShown, () => this.story.reachForestMid()],
-      [z <= W.forestEndZ && !f.cityReached, () => this.story.reachCity()],
+      [z <= 128 && !f.forestOmenShown, () => this.story.reachOmen()],                                  // Ch.1 omen
+      [z <= W.forestMidZ && !f.forestMidShown, () => this.story.reachForestMid()],                      // Ch.2
+      [z <= W.forestEndZ && !f.cityReached, () => this.story.reachCity()],                              // Ch.3
       [z <= -34 && f.cityReached && !f.cityMidShown, () => this.story.reachCityMid()],
-      [z <= W.avenueZ && f.cityReached && !f.avenueReached, () => this.story.reachAvenue()],
+      [z <= W.avenueZ && f.cityReached && !f.avenueReached, () => this.story.reachAvenue()],            // Ch.4
       [z <= -116 && f.avenueReached && !f.preBossShown, () => this.story.reachPreBoss()],
     ];
     for (const [cond, fn] of beats) {
@@ -250,7 +251,7 @@ export class Game {
     if (!id) return;
     const spell = SPELLS_BY_ID[id];
     if ((this.cooldowns[id] || 0) > 0) return;
-    if (this.player.mana < spell.mpCost) { this.hud.log('Not enough energy.', 'system'); return; }
+    if (this.player.mana < spell.mpCost) { this.hud.log('ATB not charged.', 'system'); return; }
 
     this.player.mana -= spell.mpCost;
     this.cooldowns[id] = spell.cooldown || 0.6;

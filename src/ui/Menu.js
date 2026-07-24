@@ -138,7 +138,7 @@ export class Menu {
     this.heroInfo.innerHTML = `
       <div class="inv-item"><span>Level</span><span>${this.player.level}</span></div>
       <div class="inv-item"><span>HP</span><span>${Math.ceil(this.player.health)}/${this.player.maxHealth}</span></div>
-      <div class="inv-item"><span>EN</span><span>${Math.floor(this.player.mana)}/${this.player.maxMana}</span></div>
+      <div class="inv-item"><span>ATB</span><span>${Math.floor(this.player.mana)}/${this.player.maxMana}</span></div>
       <div class="inv-item"><span>Abilities</span><span>${this.player.learnedSpells.length}</span></div>`;
   }
 }

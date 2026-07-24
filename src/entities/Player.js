@@ -165,11 +165,12 @@ export class Player {
   update(dt, input) {
     if (!this.alive) return;
 
-    // Mouse look → camera orbit
+    // Mouse / touch look → camera orbit (scaled by the sensitivity setting)
     const { dx, dy } = input.consumeMouse();
     const cam = CONFIG.camera;
-    this.camYaw -= dx * cam.sensitivity;
-    this.camPitch = THREE.MathUtils.clamp(this.camPitch + dy * cam.sensitivity, cam.pitchMin, cam.pitchMax);
+    const sens = cam.sensitivity * (input.lookSens || 1);
+    this.camYaw -= dx * sens;
+    this.camPitch = THREE.MathUtils.clamp(this.camPitch + dy * sens, cam.pitchMin, cam.pitchMax);
 
     // Frozen in place? Look around but don't move.
     if (this.rootTimer > 0) this.rootTimer -= dt;
@@ -252,6 +253,8 @@ export class Player {
       this.mesh.position.z += Math.cos(this.facing) * this._braverFwd;
     }
     this.mesh.rotation.y = this.facing;
+    // Dodge-roll: tumble forward through the roll
+    this.mesh.rotation.x = this.dashTimer > 0 ? (1 - this.dashTimer / 0.34) * Math.PI * 2 : 0;
 
     this._updateCamera(dt);
   }
@@ -289,6 +292,9 @@ export class Player {
     const half = next.z < w.plazaZ + 18 ? w.plazaHalfWidth : w.streetHalfWidth;
     next.x = Math.max(-half, Math.min(half, next.x));
     next.z = Math.max(w.endZ + 4, Math.min(w.startZ, next.z));
+    // Encounter barriers: can't pass the current group / can't leave the arena
+    if (this.frontLineZ != null) next.z = Math.max(next.z, this.frontLineZ);
+    if (this.arenaBackZ != null) next.z = Math.min(next.z, this.arenaBackZ);
   }
 
   _updateCamera(dt) {
@@ -316,25 +322,27 @@ export class Player {
   /** Hold a charge-up pose for `seconds` (ability cast / Limit Break). */
   charge(seconds) { this.chargeTimer = Math.max(this.chargeTimer, seconds); }
 
+  /** Apply damage; returns the amount actually taken (0 if dodged mid-roll). */
   applyDamage(amount) {
+    if (this.dashTimer > 0) return 0;              // i-frames while rolling
     const reduced = Math.max(1, Math.round(amount * (1 - this.damageReduction)));
     this.health = Math.max(0, this.health - reduced);
     if (this.health <= 0) this.alive = false;
-    return this.health <= 0;
+    return reduced;
   }
 
   /** Freeze the hero in place for `seconds` (EMP / cryo). */
   applyRoot(seconds) { this.rootTimer = Math.max(this.rootTimer, seconds); }
 
-  /** Quick evasive dash in the current move direction (or camera-forward). */
+  /** Evasive dodge-ROLL (i-frames) in the move direction or camera-forward. */
   dash(input) {
     if (this.dashCd > 0 || this.rootTimer > 0) return false;
     const mx = input.moveX, mz = input.moveZ;
     const angle = (mx !== 0 || mz !== 0) ? Math.atan2(mx, mz) + this.camYaw : this.camYaw + Math.PI;
     this.dashDir.set(Math.sin(angle), 0, Math.cos(angle));
     this.facing = angle;
-    this.dashTimer = 0.2;
-    this.dashCd = 1.1;
+    this.dashTimer = 0.34;   // roll duration (also the i-frame window)
+    this.dashCd = 1.2;       // roll cooldown
     return true;
   }
 

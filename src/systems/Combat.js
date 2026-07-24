@@ -17,9 +17,9 @@ const BOSSES = {
     xp: 500, gold: 400, color: 0x8a2f38, eye: 0xff3300, attackRange: 3.4, attackCd: 1.8, isBoss: true, phaseThreshold: 0.5, base: 'ogre' },
   malketh: { bossId: 'malketh', name: 'Hunter-Class Mech', body: 'mech', health: 420, damage: 16, speed: 3.6, scale: 2.2,
     xp: 900, gold: 800, color: 0x3a4654, eye: 0xff3344, attackRange: 3.8, attackCd: 1.7, isBoss: true, phaseThreshold: 0.5, base: 'revenant' },
-  frostqueen: { bossId: 'frostqueen', name: 'President Vance', body: 'mech', health: 950, damage: 18, speed: 3.7, scale: 2.2,
-    xp: 1400, gold: 1200, color: 0xc9a24a, eye: 0xff2222, attackRange: 3.8, attackCd: 1.8, isBoss: true, phaseThreshold: 0.5,
-    base: 'revenant', freezeDur: 1.6 },
+  frostqueen: { bossId: 'frostqueen', name: 'President Vance', body: 'suit', health: 950, damage: 20, speed: 3.4, scale: 1.7,
+    xp: 1400, gold: 1200, color: 0x24242e, eye: 0xff3030, attackRange: 3.6, attackCd: 1.7, isBoss: true, phaseThreshold: 0.5,
+    base: 'revenant', freezeDur: 1.4 },
 };
 
 let ENEMY_UID = 0;
@@ -72,8 +72,24 @@ export class Combat {
       e.uid = ENEMY_UID++;
       this.enemies.push(e);
     });
+    this._frontZ = wave.z - 3;         // one-group lock: can't pass until cleared
     this.waveIndex++;
     if (this.onWave) this.onWave(wave);
+  }
+
+  /** Keep the player behind the current group, or inside the boss arena. */
+  _applyBarriers() {
+    const W = CONFIG.world;
+    if (this.boss && this.boss.alive) {
+      this.player.frontLineZ = W.endZ + 4;
+      this.player.arenaBackZ = W.plazaZ + 22;      // sealed in the plaza arena
+    } else if (this.livingCount > 0) {
+      this.player.frontLineZ = this._frontZ ?? (W.endZ + 4);
+      this.player.arenaBackZ = W.startZ;
+    } else {
+      this.player.frontLineZ = W.endZ + 4;
+      this.player.arenaBackZ = W.startZ;
+    }
   }
 
   // ---------------------------------------------------------
@@ -101,6 +117,8 @@ export class Combat {
 
     this._updateLasers(dt);
     this._updateEnemyBars();
+    this._applyBarriers();
+    this.hud.updateBossBar(this.boss);
   }
 
   /** Resolve one enemy's action: heal an ally, freeze, or just hit. */
@@ -122,16 +140,10 @@ export class Combat {
     this._spawnLaser(e.position, this.player.position, e.type.eye || 0xff4444);
 
     const dmg = Math.round(e.type.damage);
-    const dead = this.player.applyDamage(dmg);
-    this.hud.floatDamage(this.player.position, dmg, 'player-hit');
-
-    if (e.type.freezeDur) {
-      this.player.applyRoot(e.type.freezeDur);
-      this.hud.log(`${e.type.name} freezes you solid!`, 'damage');
-    } else {
-      this.hud.log(`${e.type.name} hits you for ${dmg}`, 'damage');
-    }
-    if (dead && this.onPlayerDeath) this.onPlayerDeath();
+    const applied = this.player.applyDamage(dmg);      // returns 0 if dodged (rolling)
+    if (applied > 0) this.hud.floatDamage(this.player.position, applied, 'player-hit');   // big red number
+    if (applied > 0 && e.type.freezeDur) this.player.applyRoot(e.type.freezeDur);
+    if (!this.player.alive && this.onPlayerDeath) this.onPlayerDeath();
   }
 
   /** A brief glowing beam from `from` to `to`. */

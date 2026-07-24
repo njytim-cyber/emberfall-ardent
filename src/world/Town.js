@@ -67,12 +67,15 @@ export class Town {
   //  The Emberwood
   // ---------------------------------------------------------
   _buildForest() {
-    for (let z = W.startZ - 2; z > W.forestEndZ + 4; z -= 8) {
+    // Dense-looking tree line on both sides, kept performant (2 ranks)
+    for (let z = W.startZ - 2; z > W.forestEndZ + 4; z -= 7) {
       for (const sx of [-1, 1]) {
-        const x = sx * (W.streetHalfWidth + 3 + Math.random() * 16);
-        this._tree(x, z + (Math.random() - 0.5) * 4);
+        for (let rank = 0; rank < 2; rank++) {
+          const x = sx * (W.streetHalfWidth + 3 + rank * 7 + Math.random() * 5);
+          this._tree(x, z + (Math.random() - 0.5) * 5);
+        }
       }
-      if (Math.random() < 0.6) this._mushroom((Math.random() - 0.5) * W.streetHalfWidth * 1.6, z);
+      if (Math.random() < 0.5) this._mushroom((Math.random() - 0.5) * W.streetHalfWidth * 1.7, z);
     }
   }
 
@@ -92,9 +95,9 @@ export class Town {
       cl.position.set((Math.random() - 0.5) * 1.2, h + i * 1.2, (Math.random() - 0.5) * 1.2);
       cl.castShadow = true; g.add(cl);
     }
-    // a soft spore light near some trees
-    if (Math.random() < 0.4) {
-      const light = new THREE.PointLight(glow, 4, 16, 2);
+    // a soft spore light near a few trees (kept sparse — WebGL light budget)
+    if (Math.random() < 0.05) {
+      const light = new THREE.PointLight(glow, 5, 18, 2);
       light.position.set(0, h * 0.8, 0); g.add(light);
     }
     this.group.add(g);

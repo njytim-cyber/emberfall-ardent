@@ -29,7 +29,12 @@ export class Cutscene {
       <div class="cine-bar top"></div>
       <div class="cine-bar bottom"></div>
       <div class="cutscene-box">
-        <div class="cutscene-portrait"></div>
+        <div class="cutscene-portrait comms">
+          <div class="comms-scan"></div>
+          <div class="comms-face"></div>
+          <div class="comms-wave"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="comms-live">● LIVE</div>
+        </div>
         <div class="cutscene-body">
           <div class="cutscene-speaker"></div>
           <div class="cutscene-text"></div>
@@ -40,7 +45,8 @@ export class Cutscene {
 
     this.root = root;
     this.box = root.querySelector('.cutscene-box');
-    this.portraitEl = root.querySelector('.cutscene-portrait');
+    this.commsEl = root.querySelector('.cutscene-portrait');
+    this.faceEl = root.querySelector('.comms-face');
     this.speakerEl = root.querySelector('.cutscene-speaker');
     this.textEl = root.querySelector('.cutscene-text');
 
@@ -74,7 +80,7 @@ export class Cutscene {
 
   _renderLine(line) {
     this.box.dataset.mood = line.mood || 'default';
-    this.portraitEl.textContent = line.portrait || '';
+    this.faceEl.textContent = line.portrait || '';
     this.speakerEl.textContent = line.speaker || '';
     this._typeText(line.text || '');
   }
@@ -83,6 +89,7 @@ export class Cutscene {
     this._typing = true;
     this._fullText = full;
     this.textEl.textContent = '';
+    this.commsEl.classList.add('talking');   // mouth/voice bars animate while speaking
     let i = 0;
     clearInterval(this._typer);
     this._typer = setInterval(() => {
@@ -95,6 +102,7 @@ export class Cutscene {
     clearInterval(this._typer);
     this.textEl.textContent = this._fullText;
     this._typing = false;
+    this.commsEl.classList.remove('talking');
   }
 
   _end() {

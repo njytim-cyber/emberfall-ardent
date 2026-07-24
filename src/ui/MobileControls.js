@@ -79,14 +79,27 @@ export class MobileControls {
       e.preventDefault();
       const t = e.changedTouches[0];
       this._joyId = t.identifier;
+      this._joyStart = { t: performance.now(), x: t.clientX, y: t.clientY };
+      this._joyMoved = 0;
       move(t);
     }, { passive: false });
     this.joy.addEventListener('touchmove', (e) => {
       e.preventDefault();
-      for (const t of e.changedTouches) if (t.identifier === this._joyId) move(t);
+      for (const t of e.changedTouches) if (t.identifier === this._joyId) {
+        this._joyMoved = Math.max(this._joyMoved, Math.hypot(t.clientX - this._joyStart.x, t.clientY - this._joyStart.y));
+        move(t);
+      }
     }, { passive: false });
     this.joy.addEventListener('touchend', (e) => {
-      for (const t of e.changedTouches) if (t.identifier === this._joyId) end();
+      for (const t of e.changedTouches) if (t.identifier === this._joyId) {
+        // A quick tap on the joystick toggles run (sprint)
+        const quick = performance.now() - this._joyStart.t < 250;
+        if (quick && this._joyMoved < 14) {
+          this.input._runToggle = !this.input._runToggle;
+          this.joy.classList.toggle('running', this.input._runToggle);
+        }
+        end();
+      }
     }, { passive: false });
     this.joy.addEventListener('touchcancel', end, { passive: false });
   }

@@ -35,11 +35,23 @@ export class HUD {
   }
 
   _buildExtras() {
+    // Persistent chapter label (top-right, above the objective)
+    this.chapterEl = document.createElement('div');
+    this.chapterEl.id = 'chapter-label';
+    this.el.hud.appendChild(this.chapterEl);
+
     this.objectiveEl = document.createElement('div');
     this.objectiveEl.id = 'objective';
     this.objectiveEl.innerHTML = `<span class="obj-label">QUEST</span><span class="obj-text"></span>`;
     this.el.hud.appendChild(this.objectiveEl);
     this.objTextEl = this.objectiveEl.querySelector('.obj-text');
+
+    // Big chapter title card (flashes in when a chapter starts)
+    this.chapterCard = document.createElement('div');
+    this.chapterCard.id = 'chapter-card';
+    this.chapterCard.className = 'hidden';
+    this.chapterCard.innerHTML = '<span class="cc-num"></span><span class="cc-name"></span>';
+    this.el.hud.appendChild(this.chapterCard);
 
     this.promptEl = document.createElement('div');
     this.promptEl.id = 'interact-prompt';
@@ -213,6 +225,18 @@ export class HUD {
     if (!text) { this.objectiveEl.classList.add('hidden'); return; }
     this.objectiveEl.classList.remove('hidden');
     this.objTextEl.textContent = text;
+  }
+
+  /** Update the persistent top-right chapter label + flash a title card. */
+  setChapter(num, name) {
+    this.chapterEl.textContent = `CHAPTER ${num}`;
+    this.chapterCard.querySelector('.cc-num').textContent = `CHAPTER ${num}`;
+    this.chapterCard.querySelector('.cc-name').textContent = name;
+    this.chapterCard.classList.remove('hidden', 'go');
+    void this.chapterCard.offsetWidth;
+    this.chapterCard.classList.add('go');
+    clearTimeout(this._ccTimer);
+    this._ccTimer = setTimeout(() => this.chapterCard.classList.add('hidden'), 3600);
   }
 
   setPrompt(text) {

@@ -1,15 +1,17 @@
 /* ============================================================
-   World — a linear JOURNEY: you spawn deep in the mystical
-   Emberwood (glowing trees, mist), push down the path through a
-   city gate, and fight through the streets of Ardent to the plaza
-   where President Vance waits. Two visual zones on one path.
+   World — a long, WINDING journey. The walkable corridor snakes
+   left and right (pathCenterX) so you can't see the city when you
+   spawn deep in the Emberwood; you round the bends, break through
+   a gate, and descend into the towering city of Ardent, ending at
+   Vance's plaza. Everything is placed relative to the centre-line.
    ============================================================ */
 
 import * as THREE from 'three';
-import { CONFIG } from '../data/config.js';
+import { CONFIG, pathCenterX } from '../data/config.js';
 import { getTexture } from '../core/textures.js';
 
 const W = CONFIG.world;
+const cx = pathCenterX;
 
 export class Town {
   constructor(scene) {
@@ -19,17 +21,17 @@ export class Town {
 
     this.obstacles = [];
     this._signs = [];
-    this._spores = [];
 
-    this.playerSpawn = new THREE.Vector3(0, 0, W.startZ - 4);
-    this.raePos = new THREE.Vector3(5, 0, W.startZ - 10);
-    this.docPos = new THREE.Vector3(-8.5, 0, -18);        // Doc's stall inside the city
-    this.bossPos = new THREE.Vector3(0, 0, W.plazaZ);
+    this.playerSpawn = new THREE.Vector3(cx(W.startZ - 4), 0, W.startZ - 4);
+    this.raePos = new THREE.Vector3(cx(W.startZ - 10) + 5, 0, W.startZ - 10);
+    this.docPos = new THREE.Vector3(cx(-24) - 8, 0, -24);
+    this.bossPos = new THREE.Vector3(cx(W.plazaZ), 0, W.plazaZ);
 
     this._buildGround();
     this._buildForest();
     this._buildGate();
     this._buildCity();
+    this._buildSkyline();
     this._buildPlaza();
   }
 
@@ -43,144 +45,118 @@ export class Town {
   // ---------------------------------------------------------
   _buildGround() {
     const len = Math.abs(W.startZ - W.endZ) + 120;
-    // Forest floor (mossy green) over the whole thing…
-    const moss = new THREE.Mesh(new THREE.PlaneGeometry(400, len),
+    // Forest floor everywhere (wide enough to cover the meander)
+    const moss = new THREE.Mesh(new THREE.PlaneGeometry(360, len),
       this._mat(0x2f4a2a, { map: getTexture('grass'), roughness: 1 }));
-    moss.rotation.x = -Math.PI / 2; moss.position.set(0, -0.02, (W.startZ + W.endZ) / 2);
+    moss.rotation.x = -Math.PI / 2; moss.position.set(0, -0.03, (W.startZ + W.endZ) / 2);
     moss.receiveShadow = true; this.group.add(moss);
 
-    // …with an asphalt overlay across the city half
+    // Asphalt across the city half
     const cityLen = Math.abs(W.forestEndZ - W.endZ) + 40;
-    const asphalt = new THREE.Mesh(new THREE.PlaneGeometry(340, cityLen),
+    const asphalt = new THREE.Mesh(new THREE.PlaneGeometry(300, cityLen),
       this._mat(0x23242c, { map: getTexture('cobble'), roughness: 0.7, metalness: 0.15 }));
-    asphalt.rotation.x = -Math.PI / 2; asphalt.position.set(0, -0.015, (W.forestEndZ + W.endZ) / 2);
+    asphalt.rotation.x = -Math.PI / 2; asphalt.position.set(0, -0.02, (W.forestEndZ + W.endZ) / 2);
     asphalt.receiveShadow = true; this.group.add(asphalt);
 
-    // The path itself, running the full length
-    const path = new THREE.Mesh(new THREE.PlaneGeometry(W.streetHalfWidth * 2, len),
-      this._mat(0x59544a, { map: getTexture('cobble'), roughness: 0.9 }));
-    path.rotation.x = -Math.PI / 2; path.position.set(0, 0, (W.startZ + W.endZ) / 2);
-    path.receiveShadow = true; this.group.add(path);
+    // The winding path itself — overlapping segments that follow the centre-line
+    const pathMat = this._mat(0x59544a, { map: getTexture('cobble'), roughness: 0.9 });
+    for (let z = W.startZ; z > W.endZ; z -= 6) {
+      const seg = new THREE.Mesh(new THREE.PlaneGeometry(W.streetHalfWidth * 2 + 2, 9), pathMat);
+      seg.rotation.x = -Math.PI / 2;
+      // yaw the segment to align with the local path tangent
+      seg.rotation.z = Math.atan2(cx(z - 3) - cx(z + 3), 6);
+      seg.position.set(cx(z), -0.01, z);
+      seg.receiveShadow = true; this.group.add(seg);
+    }
   }
 
   // ---------------------------------------------------------
-  //  The Emberwood
+  //  The Emberwood (long + winding)
   // ---------------------------------------------------------
   _buildForest() {
-    // Dense-looking tree line on both sides, kept performant (2 ranks)
-    for (let z = W.startZ - 2; z > W.forestEndZ + 4; z -= 7) {
+    for (let z = W.startZ - 2; z > W.forestEndZ + 4; z -= 8) {
+      const c = cx(z);
       for (const sx of [-1, 1]) {
         for (let rank = 0; rank < 2; rank++) {
-          const x = sx * (W.streetHalfWidth + 3 + rank * 7 + Math.random() * 5);
+          const x = c + sx * (W.streetHalfWidth + 3 + rank * 7 + Math.random() * 5);
           this._tree(x, z + (Math.random() - 0.5) * 5);
         }
       }
-      // Natural scatter along the path: rocks, ferns, glow-mushrooms, the odd fallen log
-      const roll = Math.random();
-      const px = (Math.random() - 0.5) * W.streetHalfWidth * 1.85;
-      if (roll < 0.35) this._rock(px, z);
-      else if (roll < 0.6) this._fern(px, z);
-      else if (roll < 0.78) this._mushroom(px, z);
-      else if (roll < 0.86) this._log()(px, z);
+      const roll = Math.random(); const px = c + (Math.random() - 0.5) * W.streetHalfWidth * 1.8;
+      if (roll < 0.32) this._rock(px, z);
+      else if (roll < 0.55) this._fern(px, z);
+      else if (roll < 0.72) this._mushroom(px, z);
+      else if (roll < 0.8) this._log(px, z);
     }
+  }
+
+  _tree(x, z) {
+    const g = new THREE.Group(); g.position.set(x, 0, z);
+    const glow = [0x6bff9b, 0x6be0ff, 0xb08bff][Math.floor(Math.random() * 3)];
+    const h = 7 + Math.random() * 6;
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.65, h, 7), this._mat(0x2e2620, { roughness: 1 }));
+    trunk.position.y = h / 2; trunk.castShadow = true; g.add(trunk);
+    for (let i = 0; i < 3; i++) {
+      const r = (2.6 - i * 0.55) * (0.9 + Math.random() * 0.3);
+      const cl = new THREE.Mesh(new THREE.SphereGeometry(r, 9, 8),
+        this._mat(0x1f3a24, { emissive: glow, emissiveIntensity: 0.5, roughness: 0.9 }));
+      cl.position.set((Math.random() - 0.5) * 1.3, h + i * 1.3, (Math.random() - 0.5) * 1.3);
+      cl.castShadow = true; g.add(cl);
+    }
+    if (Math.random() < 0.05) { const l = new THREE.PointLight(glow, 5, 18, 2); l.position.set(0, h * 0.8, 0); g.add(l); }
+    this.group.add(g);
+    this.obstacles.push({ type: 'circle', x, z, r: 0.85 });
   }
 
   _rock(x, z) {
     const g = new THREE.Group(); g.position.set(x, 0, z);
-    const n = 1 + Math.floor(Math.random() * 3);
-    for (let i = 0; i < n; i++) {
+    for (let i = 0, n = 1 + Math.floor(Math.random() * 3); i < n; i++) {
       const s = 0.4 + Math.random() * 0.9;
-      const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0),
-        this._mat(0x5a5d63, { roughness: 1, metalness: 0.05 }));
+      const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0), this._mat(0x5a5d63, { roughness: 1, metalness: 0.05 }));
       rock.position.set((Math.random() - 0.5) * 1.2, s * 0.5, (Math.random() - 0.5) * 1.2);
-      rock.rotation.set(Math.random(), Math.random(), Math.random());
-      rock.castShadow = rock.receiveShadow = true; g.add(rock);
+      rock.rotation.set(Math.random(), Math.random(), Math.random()); rock.castShadow = rock.receiveShadow = true; g.add(rock);
     }
-    this.group.add(g);
-    this.obstacles.push({ type: 'circle', x, z, r: 0.7 });
+    this.group.add(g); this.obstacles.push({ type: 'circle', x, z, r: 0.7 });
   }
 
   _fern(x, z) {
     const g = new THREE.Group(); g.position.set(x, 0, z);
     const leaf = this._mat(0x2f5a2c, { roughness: 0.9 });
-    for (let i = 0; i < 5; i++) {
-      const a = (i / 5) * Math.PI * 2;
-      const frond = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.8, 4), leaf);
-      frond.position.set(Math.cos(a) * 0.18, 0.4, Math.sin(a) * 0.18);
-      frond.rotation.set(0.5 * Math.cos(a), a, 0.5 * Math.sin(a)); g.add(frond);
-    }
+    for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2; const f = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.8, 4), leaf); f.position.set(Math.cos(a) * 0.18, 0.4, Math.sin(a) * 0.18); f.rotation.set(0.5 * Math.cos(a), a, 0.5 * Math.sin(a)); g.add(f); }
     this.group.add(g);
-  }
-
-  _log() {
-    return (x, z) => {
-      const log = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 3 + Math.random() * 2, 8),
-        this._mat(0x3a2e22, { roughness: 1 }));
-      log.rotation.z = Math.PI / 2; log.rotation.y = Math.random() * Math.PI;
-      log.position.set(x, 0.35, z); log.castShadow = log.receiveShadow = true;
-      this.group.add(log);
-      this.obstacles.push({ type: 'circle', x, z, r: 0.8 });
-    };
-  }
-
-  _tree(x, z) {
-    const g = new THREE.Group();
-    g.position.set(x, 0, z);
-    const glow = [0x6bff9b, 0x6be0ff, 0xb08bff][Math.floor(Math.random() * 3)];
-    const h = 6 + Math.random() * 5;
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.6, h, 7),
-      this._mat(0x2e2620, { roughness: 1 }));
-    trunk.position.y = h / 2; trunk.castShadow = true; g.add(trunk);
-    // glowing canopy
-    for (let i = 0; i < 3; i++) {
-      const r = (2.4 - i * 0.5) * (0.9 + Math.random() * 0.3);
-      const cl = new THREE.Mesh(new THREE.SphereGeometry(r, 9, 8),
-        this._mat(0x1f3a24, { emissive: glow, emissiveIntensity: 0.5, roughness: 0.9 }));
-      cl.position.set((Math.random() - 0.5) * 1.2, h + i * 1.2, (Math.random() - 0.5) * 1.2);
-      cl.castShadow = true; g.add(cl);
-    }
-    // a soft spore light near a few trees (kept sparse — WebGL light budget)
-    if (Math.random() < 0.05) {
-      const light = new THREE.PointLight(glow, 5, 18, 2);
-      light.position.set(0, h * 0.8, 0); g.add(light);
-    }
-    this.group.add(g);
-    this.obstacles.push({ type: 'circle', x, z, r: 0.8 });
   }
 
   _mushroom(x, z) {
     const glow = [0x6bff9b, 0xff8bd0, 0x8bb0ff][Math.floor(Math.random() * 3)];
     const g = new THREE.Group(); g.position.set(x, 0, z);
-    const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 0.7, 6), this._mat(0xd8d0c0));
-    stalk.position.y = 0.35; g.add(stalk);
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2),
-      this._mat(0x222, { emissive: glow, emissiveIntensity: 1.4 }));
-    cap.position.y = 0.7; g.add(cap);
-    this.group.add(g);
-    this._signs.push({ mat: cap.material, phase: Math.random() * 6 });
+    const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.14, 0.7, 6), this._mat(0xd8d0c0)); stalk.position.y = 0.35; g.add(stalk);
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.4, 10, 8, 0, Math.PI * 2, 0, Math.PI / 2), this._mat(0x222, { emissive: glow, emissiveIntensity: 1.4 })); cap.position.y = 0.7; g.add(cap);
+    this.group.add(g); this._signs.push({ mat: cap.material, phase: Math.random() * 6 });
   }
 
-  // ---------------------------------------------------------
-  //  The city gate (forest → city threshold)
+  _log(x, z) {
+    const log = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.4, 3 + Math.random() * 2, 8), this._mat(0x3a2e22, { roughness: 1 }));
+    log.rotation.z = Math.PI / 2; log.rotation.y = Math.random() * Math.PI; log.position.set(x, 0.35, z); log.castShadow = log.receiveShadow = true;
+    this.group.add(log); this.obstacles.push({ type: 'circle', x, z, r: 0.8 });
+  }
+
   // ---------------------------------------------------------
   _buildGate() {
-    const z = W.forestEndZ;
+    const z = W.forestEndZ, c = cx(z);
     const stone = this._mat(0x50535c, { roughness: 0.9, metalness: 0.2 });
     for (const sx of [-1, 1]) {
-      const pillar = new THREE.Mesh(new THREE.BoxGeometry(3, 12, 3), stone);
-      pillar.position.set(sx * (W.streetHalfWidth + 2), 6, z); pillar.castShadow = true; this.group.add(pillar);
-      this.obstacles.push({ type: 'box', x: sx * (W.streetHalfWidth + 2), z, hw: 1.6, hd: 1.6 });
+      const pillar = new THREE.Mesh(new THREE.BoxGeometry(3.5, 16, 3.5), stone);
+      pillar.position.set(c + sx * (W.streetHalfWidth + 2.5), 8, z); pillar.castShadow = true; this.group.add(pillar);
+      this.obstacles.push({ type: 'box', x: c + sx * (W.streetHalfWidth + 2.5), z, hw: 1.8, hd: 1.8 });
     }
-    const lintel = new THREE.Mesh(new THREE.BoxGeometry(W.streetHalfWidth * 2 + 8, 3, 3), stone);
-    lintel.position.set(0, 13, z); lintel.castShadow = true; this.group.add(lintel);
-    const sign = new THREE.Mesh(new THREE.BoxGeometry(12, 2, 0.4),
-      this._mat(0x111, { emissive: 0xff3b5c, emissiveIntensity: 2 }));
-    sign.position.set(0, 13, z + 1.6); this.group.add(sign);
-    this._signs.push({ mat: sign.material, phase: 0 });
+    const lintel = new THREE.Mesh(new THREE.BoxGeometry(W.streetHalfWidth * 2 + 9, 3.5, 3.5), stone);
+    lintel.position.set(c, 17, z); lintel.castShadow = true; this.group.add(lintel);
+    const sign = new THREE.Mesh(new THREE.BoxGeometry(14, 2.4, 0.5), this._mat(0x111, { emissive: 0xff3b5c, emissiveIntensity: 2 }));
+    sign.position.set(c, 17, z + 1.9); this.group.add(sign); this._signs.push({ mat: sign.material, phase: 0 });
   }
 
   // ---------------------------------------------------------
-  //  The city of Ardent
+  //  The city of Ardent — bigger and taller
   // ---------------------------------------------------------
   _buildCity() {
     const palettes = [
@@ -190,12 +166,30 @@ export class Town {
       { wall: 0x5c636f, glow: 0x5ce0a0, sign: 0xff6d4d },
     ];
     let i = 0;
-    for (let z = W.forestEndZ - 8; z > W.plazaZ + 16; z -= 17) {
+    for (let z = W.forestEndZ - 8; z > W.plazaZ + 18; z -= 15) {
+      const c = cx(z);
       for (const sx of [-1, 1]) {
-        const x = sx * (W.streetHalfWidth + 10 + Math.random() * 3);
-        this._building(x, z + (Math.random() - 0.5) * 3, sx, palettes[i % palettes.length]);
-        this._streetLight(sx * (W.streetHalfWidth + 2.5), z + 8);
+        const x = c + sx * (W.streetHalfWidth + 11 + Math.random() * 3);
+        this._building(x, z + (Math.random() - 0.5) * 3, sx, palettes[i % palettes.length], 1);
+        this._streetLight(c + sx * (W.streetHalfWidth + 2.5), z + 7);
         i++;
+      }
+    }
+  }
+
+  /** Distant, low-detail skyscraper skyline for scale (few meshes each). */
+  _buildSkyline() {
+    for (let z = W.forestEndZ - 20; z > W.plazaZ + 10; z -= 26) {
+      const c = cx(z);
+      for (const sx of [-1, 1]) {
+        const x = c + sx * (W.streetHalfWidth + 34 + Math.random() * 24);
+        const h = 45 + Math.random() * 45, w = 12 + Math.random() * 10;
+        const tower = new THREE.Mesh(new THREE.BoxGeometry(w, h, w),
+          this._mat(0x2b303a, { emissive: [0x22384f, 0x3a2f4a][i2n(x)], emissiveIntensity: 0.25, roughness: 0.6, metalness: 0.4 }));
+        tower.position.set(x, h / 2, z); this.group.add(tower);
+        const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.4, 6, 6), this._mat(0x300, { emissive: 0xff0000, emissiveIntensity: 2 }));
+        beacon.position.set(x, h + 1, z); this.group.add(beacon);
+        this._signs.push({ mat: beacon.material, phase: Math.random() * 6, beacon: true });
       }
     }
   }
@@ -206,79 +200,73 @@ export class Town {
     pole.position.y = 3; pole.castShadow = true; g.add(pole);
     const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.2, 0.3), this._mat(0x222, { emissive: 0xfff2c0, emissiveIntensity: 1 }));
     lamp.position.set(x > 0 ? -1.2 : 1.2, 5.7, 0); g.add(lamp);
-    this.group.add(g);
-    this.obstacles.push({ type: 'circle', x, z, r: 0.4 });
+    this.group.add(g); this.obstacles.push({ type: 'circle', x, z, r: 0.4 });
   }
 
   _building(x, z, sx, pal) {
-    const g = new THREE.Group();
-    g.position.set(x, 0, z);
-    g.rotation.y = sx > 0 ? -Math.PI / 2 : Math.PI / 2;
+    const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = sx > 0 ? -Math.PI / 2 : Math.PI / 2;
     const wallTex = getTexture('plaster', '#ffffff');
-    const depth = 14 + Math.random() * 6, baseW = 12 + Math.random() * 5;
-    const tiers = 2 + Math.floor(Math.random() * 3);
+    const depth = 15 + Math.random() * 7, baseW = 14 + Math.random() * 6;
+    const tiers = 3 + Math.floor(Math.random() * 3);
     let h = 0, w = baseW, d = depth;
     for (let t = 0; t < tiers; t++) {
-      const th = 8 + Math.random() * 10;
+      const th = 11 + Math.random() * 12;
       const body = new THREE.Mesh(new THREE.BoxGeometry(w, th, d), this._mat(pal.wall, { map: wallTex, roughness: 0.75, metalness: 0.25 }));
       body.position.set(0, h + th / 2, 0); body.castShadow = body.receiveShadow = true; g.add(body);
       this._windows(g, w, th, d, h, pal.glow);
-      h += th; w *= 0.8; d *= 0.85;
+      h += th; w *= 0.82; d *= 0.86;
     }
     this._rooftop(g, w, d, h);
-    const store = new THREE.Mesh(new THREE.BoxGeometry(baseW + 0.4, 3.2, depth + 0.4), this._mat(0x2a2c32, { roughness: 0.7 }));
-    store.position.set(0, 1.6, 0); g.add(store);
-    const sign = new THREE.Mesh(new THREE.BoxGeometry(baseW * 0.55, 1.1, 0.2), this._mat(0x111, { emissive: pal.sign, emissiveIntensity: 1.6 }));
-    sign.position.set(0, 4.7, depth / 2 + 0.15); g.add(sign);
-    this._signs.push({ mat: sign.material, phase: Math.random() * 6 });
+    const store = new THREE.Mesh(new THREE.BoxGeometry(baseW + 0.4, 3.4, depth + 0.4), this._mat(0x2a2c32, { roughness: 0.7 }));
+    store.position.set(0, 1.7, 0); g.add(store);
+    const sign = new THREE.Mesh(new THREE.BoxGeometry(baseW * 0.55, 1.2, 0.2), this._mat(0x111, { emissive: pal.sign, emissiveIntensity: 1.6 }));
+    sign.position.set(0, 5, depth / 2 + 0.15); g.add(sign); this._signs.push({ mat: sign.material, phase: Math.random() * 6 });
     this.group.add(g);
-    const cos = Math.abs(Math.cos(g.rotation.y)), sin = Math.abs(Math.sin(g.rotation.y));
-    this.obstacles.push({ type: 'box', x, z, hw: (baseW / 2) * cos + (depth / 2) * sin, hd: (baseW / 2) * sin + (depth / 2) * cos });
+    const co = Math.abs(Math.cos(g.rotation.y)), si = Math.abs(Math.sin(g.rotation.y));
+    this.obstacles.push({ type: 'box', x, z, hw: (baseW / 2) * co + (depth / 2) * si, hd: (baseW / 2) * si + (depth / 2) * co });
   }
 
   _windows(g, w, th, d, baseY, glow) {
     const lit = new THREE.MeshStandardMaterial({ color: 0x101418, emissive: glow, emissiveIntensity: 0.7, roughness: 0.2, metalness: 0.4 });
     const dark = new THREE.MeshStandardMaterial({ color: 0x2a3038, roughness: 0.3, metalness: 0.5 });
-    const cols = Math.max(3, Math.floor(w / 2.2)), rows = Math.max(2, Math.floor(th / 2.6));
+    const cols = Math.max(3, Math.floor(w / 2.4)), rows = Math.max(2, Math.floor(th / 2.8));
     for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
       const win = new THREE.Mesh(new THREE.BoxGeometry(w / cols * 0.7, 1.1, 0.15), Math.random() < 0.5 ? lit : dark);
-      win.position.set((c - (cols - 1) / 2) * (w / cols), baseY + 1.6 + r * (th - 2) / rows, d / 2 + 0.06); g.add(win);
+      win.position.set((c - (cols - 1) / 2) * (w / cols), baseY + 1.7 + r * (th - 2) / rows, d / 2 + 0.06); g.add(win);
     }
   }
 
   _rooftop(g, w, d, h) {
     const metal = this._mat(0x44484f, { metalness: 0.6, roughness: 0.5 });
-    const tank = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 2, 12), this._mat(0x6b5a45, { roughness: 0.8 }));
-    tank.position.set(-w * 0.2, h + 1, -d * 0.15); tank.castShadow = true; g.add(tank);
-    for (let k = 0; k < 2; k++) {
-      const ac = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 1.2), metal);
-      ac.position.set((Math.random() - 0.5) * w * 0.6, h + 0.4, (Math.random() - 0.5) * d * 0.5); g.add(ac);
-    }
-    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 8), this._mat(0x330000, { emissive: 0xff0000, emissiveIntensity: 2 }));
-    beacon.position.set(w * 0.25, h + 2, d * 0.1); g.add(beacon);
-    this._signs.push({ mat: beacon.material, phase: Math.random() * 6, beacon: true });
+    const tank = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 2.2, 12), this._mat(0x6b5a45, { roughness: 0.8 }));
+    tank.position.set(-w * 0.2, h + 1.1, -d * 0.15); tank.castShadow = true; g.add(tank);
+    const ac = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.9, 1.3), metal);
+    ac.position.set((Math.random() - 0.5) * w * 0.6, h + 0.45, (Math.random() - 0.5) * d * 0.5); g.add(ac);
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), this._mat(0x330000, { emissive: 0xff0000, emissiveIntensity: 2 }));
+    beacon.position.set(w * 0.25, h + 2, d * 0.1); g.add(beacon); this._signs.push({ mat: beacon.material, phase: Math.random() * 6, beacon: true });
   }
 
   // ---------------------------------------------------------
   _buildPlaza() {
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(W.plazaHalfWidth * 2 + 8, 40),
+    const c = cx(W.plazaZ);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(W.plazaHalfWidth * 2 + 12, 46),
       this._mat(0x3a3d45, { map: getTexture('cobble'), roughness: 0.7, metalness: 0.2 }));
-    floor.rotation.x = -Math.PI / 2; floor.position.set(0, 0.01, W.plazaZ - 3); floor.receiveShadow = true; this.group.add(floor);
+    floor.rotation.x = -Math.PI / 2; floor.position.set(c, 0.02, W.plazaZ - 3); floor.receiveShadow = true; this.group.add(floor);
 
-    const g = new THREE.Group(); g.position.set(0, 0, W.endZ + 6);
-    let h = 0, w = 30, d = 16;
-    for (let t = 0; t < 5; t++) {
-      const th = 12 + t * 2;
+    // Towering Helix HQ backdrop
+    const g = new THREE.Group(); g.position.set(cx(W.endZ + 6), 0, W.endZ + 6);
+    let h = 0, w = 38, d = 20;
+    for (let t = 0; t < 6; t++) {
+      const th = 16 + t * 3;
       const body = new THREE.Mesh(new THREE.BoxGeometry(w, th, d), this._mat(0x30343c, { roughness: 0.5, metalness: 0.5 }));
       body.position.set(0, h + th / 2, 0); body.castShadow = true; g.add(body);
       this._windows(g, w, th, d, h, 0xffd36b);
-      h += th; w *= 0.82; d *= 0.85;
+      h += th; w *= 0.84; d *= 0.87;
     }
-    const logo = new THREE.Mesh(new THREE.BoxGeometry(20, 3.5, 0.4), this._mat(0x111, { emissive: 0xff3b5c, emissiveIntensity: 2 }));
-    logo.position.set(0, 20, d / 2 + 8); g.add(logo);
-    this._signs.push({ mat: logo.material, phase: 0 });
+    const logo = new THREE.Mesh(new THREE.BoxGeometry(26, 4.5, 0.5), this._mat(0x111, { emissive: 0xff3b5c, emissiveIntensity: 2 }));
+    logo.position.set(0, 26, d / 2 + 10); g.add(logo); this._signs.push({ mat: logo.material, phase: 0 });
     this.group.add(g);
-    this.obstacles.push({ type: 'box', x: 0, z: W.endZ + 6, hw: 16, hd: 9 });
+    this.obstacles.push({ type: 'box', x: cx(W.endZ + 6), z: W.endZ + 6, hw: 20, hd: 11 });
   }
 
   update(dt, elapsed) {
@@ -289,3 +277,6 @@ export class Town {
     }
   }
 }
+
+// tiny deterministic pick helper for skyline tint
+function i2n(x) { return Math.abs(Math.round(x)) % 2; }

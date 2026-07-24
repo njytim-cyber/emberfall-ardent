@@ -8,7 +8,7 @@
 import * as THREE from 'three';
 import { Enemy } from '../entities/Enemy.js';
 import { Projectile } from '../entities/Projectile.js';
-import { CONFIG } from '../data/config.js';
+import { CONFIG, pathCenterX } from '../data/config.js';
 import { WAVES } from '../data/waves.js';
 
 // Bosses — tuned for fair real-time fights (internal ids kept stable)
@@ -65,7 +65,7 @@ export class Combat {
 
     wave.foes.forEach((key, i) => {
       const spread = (i - (wave.foes.length - 1) / 2) * 3.2;
-      const pos = new THREE.Vector3(spread, 0, wave.z + (Math.random() - 0.5) * 3);
+      const pos = new THREE.Vector3(pathCenterX(wave.z) + spread, 0, wave.z + (Math.random() - 0.5) * 3);
       const e = new Enemy(this.scene, pos, key);
       e._rewarded = false;
       e.group = wave.tag;

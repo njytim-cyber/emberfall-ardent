@@ -25,6 +25,7 @@ import { SPELLS_BY_ID } from '../data/spells.js';
 import { CONFIG } from '../data/config.js';
 
 const QUICK_KEYS = [',', '.', '/'];
+const CHAPTER_NAMES = { 1: 'THE DEEP WOOD', 2: 'THE BLIGHTED EDGE', 3: 'THE CITY GATE', 4: 'VANCE AVENUE', 5: 'THE PLAZA' };
 
 export class Game {
   constructor(canvas) {
@@ -67,6 +68,7 @@ export class Game {
 
     this.cooldowns = {};
     this.limit = 0;             // Limit Break gauge 0..100
+    this._lastChapter = 1;
 
     // --- Cinematic camera ---
     this.director = new Director(this.camera);
@@ -134,6 +136,8 @@ export class Game {
     await this.story.playIntro();
     this.busy = false;
     this.state = 'explore';
+    this._lastChapter = 1;
+    this.hud.setChapter(1, CHAPTER_NAMES[1]);
     this.hud.setObjective(this.story.objective());
     this._lock();
   }
@@ -167,6 +171,11 @@ export class Game {
 
     this.hud.update(this.player, this._cdFractions(), { limit: this.limit, lock: this.combat.lockTarget });
     if (this.mobile) this.mobile.setAbilities(this.player.loadout);
+    // Flash a title card when the chapter advances
+    if (this.story.flags.chapter !== this._lastChapter) {
+      this._lastChapter = this.story.flags.chapter;
+      this.hud.setChapter(this._lastChapter, CHAPTER_NAMES[this._lastChapter] || '');
+    }
 
     // Camera shake (Limit Break / big hits)
     if (this._shake > 0) {
@@ -229,12 +238,12 @@ export class Game {
     const f = this.story.flags;
     const W = CONFIG.world;
     const beats = [
-      [z <= 128 && !f.forestOmenShown, () => this.story.reachOmen()],                                  // Ch.1 omen
-      [z <= W.forestMidZ && !f.forestMidShown, () => this.story.reachForestMid()],                      // Ch.2
-      [z <= W.forestEndZ && !f.cityReached, () => this.story.reachCity()],                              // Ch.3
-      [z <= -34 && f.cityReached && !f.cityMidShown, () => this.story.reachCityMid()],
-      [z <= W.avenueZ && f.cityReached && !f.avenueReached, () => this.story.reachAvenue()],            // Ch.4
-      [z <= -116 && f.avenueReached && !f.preBossShown, () => this.story.reachPreBoss()],
+      [z <= 230 && !f.forestOmenShown, () => this.story.reachOmen()],                                   // Ch.1 omen
+      [z <= W.forestMidZ && !f.forestMidShown, () => this.story.reachForestMid()],                       // Ch.2
+      [z <= W.forestEndZ && !f.cityReached, () => this.story.reachCity()],                               // Ch.3
+      [z <= -42 && f.cityReached && !f.cityMidShown, () => this.story.reachCityMid()],
+      [z <= W.avenueZ && f.cityReached && !f.avenueReached, () => this.story.reachAvenue()],             // Ch.4
+      [z <= -158 && f.avenueReached && !f.preBossShown, () => this.story.reachPreBoss()],
     ];
     for (const [cond, fn] of beats) {
       if (cond) { this._setFocus(this.player.position, 'orbit'); this._runCutscene(fn); return; }

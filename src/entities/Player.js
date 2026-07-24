@@ -7,7 +7,7 @@
    ============================================================ */
 
 import * as THREE from 'three';
-import { CONFIG } from '../data/config.js';
+import { CONFIG, pathCenterX } from '../data/config.js';
 import { STARTING_SPELLS } from '../data/spells.js';
 
 export class Player {
@@ -336,10 +336,11 @@ export class Player {
         }
       }
     }
-    // Keep on the street: clamp to a corridor that widens at the boss plaza
+    // Keep on the WINDING corridor: clamp x around the meandering centre-line
     const w = CONFIG.world;
     const half = next.z < w.plazaZ + 18 ? w.plazaHalfWidth : w.streetHalfWidth;
-    next.x = Math.max(-half, Math.min(half, next.x));
+    const cx = pathCenterX(next.z);
+    next.x = Math.max(cx - half, Math.min(cx + half, next.x));
     next.z = Math.max(w.endZ + 4, Math.min(w.startZ, next.z));
     // Encounter barriers: can't pass the current group / can't leave the arena
     if (this.frontLineZ != null) next.z = Math.max(next.z, this.frontLineZ);

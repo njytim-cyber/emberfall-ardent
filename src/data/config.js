@@ -39,18 +39,18 @@ export const CONFIG = {
     leashRange: 30,      // gives up and returns home beyond this
   },
 
-  // --- World: a long journey — deep forest → blighted edge → city → plaza ---
+  // --- World: a long WINDING journey — deep forest → edge → city → plaza ---
   world: {
     streetHalfWidth: 12,       // walkable half-width of the path/street
-    plazaHalfWidth: 22,        // wider open area at the boss plaza
-    startZ: 180,               // spawn: deep in the Emberwood (long forest)
-    forestMidZ: 90,            // deep wood → blighted edge (chapter beat)
+    plazaHalfWidth: 24,        // wider open area at the boss plaza
+    startZ: 300,               // spawn: deep in the Emberwood (long forest)
+    forestMidZ: 150,           // deep wood → blighted edge (chapter beat)
     forestEndZ: 4,             // the wood gives way to the city gate here
-    endZ: -156,                // far end (behind the boss plaza)
-    plazaZ: -150,              // where President Vance waits
-    avenueZ: -60,              // deeper into the city (chapter beat)
-    fogNear: 45,
-    fogFar: 300,
+    endZ: -200,                // far end (behind the boss plaza)
+    plazaZ: -192,              // where President Vance waits
+    avenueZ: -70,              // deeper into the city (chapter beat)
+    fogNear: 42,
+    fogFar: 165,               // keeps the city hidden until you round the bends
   },
 
   // --- Camera (third person) ---
@@ -63,3 +63,15 @@ export const CONFIG = {
     smooth: 0.12,
   },
 };
+
+/**
+ * The winding centre-line of the path: how far (in x) the walkable corridor
+ * has meandered at depth z. Everything (player bound, trees, buildings,
+ * spawns, plaza) is placed relative to this so the road turns and twists.
+ * Fades to ~0 near the plaza so the final arena is centred.
+ */
+export function pathCenterX(z) {
+  const w = CONFIG.world;
+  const taper = Math.max(0, Math.min(1, (z - w.plazaZ - 24) / 48));
+  return (26 * Math.sin(z * 0.019) + 14 * Math.sin(z * 0.047 + 1.3)) * taper;
+}

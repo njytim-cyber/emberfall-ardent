@@ -256,3 +256,33 @@
 /* Joystick run-toggle indicator */
 #joystick.running .joy-base { border-color: #ffe070; box-shadow: 0 0 16px rgba(255,224,112,0.8); }
 #joystick.running .joy-knob { background: rgba(255,224,112,0.7); }
+
+/* ---------- Chapter label (top-right) + title card ---------- */
+#chapter-label {
+  position: absolute; top: 16px; right: 74px;
+  font-family: var(--font); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.18rem;
+  color: #ffe0a0; text-shadow: 0 2px 5px #000; opacity: 0.9;
+}
+#objective { top: 40px; }   /* nudge objective down to sit under the chapter label */
+
+#chapter-card {
+  position: absolute; top: 34%; left: 50%; transform: translate(-50%, -50%);
+  text-align: center; pointer-events: none;
+}
+#chapter-card .cc-num {
+  display: block; font-family: var(--font); font-size: 1.1rem; font-weight: 800;
+  letter-spacing: 0.4rem; color: #e0b968; text-shadow: 0 2px 8px #000;
+}
+#chapter-card .cc-name {
+  display: block; font-family: var(--font); font-size: 2.8rem; font-weight: 800;
+  letter-spacing: 0.12rem; color: #fff; text-shadow: 0 3px 16px #000, 0 0 30px rgba(224,185,104,0.5);
+  margin-top: 4px;
+}
+#chapter-card.go .cc-num { animation: ccIn 3.4s ease-out; }
+#chapter-card.go .cc-name { animation: ccIn 3.4s ease-out 0.12s backwards; }
+@keyframes ccIn {
+  0% { opacity: 0; transform: translateY(14px); letter-spacing: 0.5rem; }
+  14% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-10px); }
+}

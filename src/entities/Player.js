@@ -39,6 +39,12 @@ export class Player {
     // --- Charge-up pose (abilities / Limit Break) ---
     this.chargeTimer = 0;
 
+    // --- Braver: leaping overhead-slash animation ---
+    this.braverTimer = 0;
+    this.braverDur = 0.55;
+    this._braverY = 0;
+    this._braverFwd = 0;
+
     // --- Equipment (bought from the shop) ---
     this.equipment = { weapon: null, armor: null };
     this.weaponBonus = 0;   // added to melee damage
@@ -204,10 +210,24 @@ export class Player {
     if (this._attackAnim > 0) this._attackAnim -= dt;
     if (this.slowTimer > 0) { this.slowTimer -= dt; if (this.slowTimer <= 0) this.slow = 1; }
 
-    // Charge-up pose takes priority over the attack swing: weapon thrust
-    // overhead with a little tremble while power gathers.
+    // Animation priority: Braver leap > charge-up pose > attack swing
     const swing = this._attackAnim > 0 ? Math.sin((1 - this._attackAnim / 0.3) * Math.PI) : 0;
-    if (this.chargeTimer > 0) {
+    this._braverY = 0; this._braverFwd = 0;
+    if (this.braverTimer > 0) {
+      this.braverTimer -= dt;
+      const p = 1 - this.braverTimer / this.braverDur;   // 0 → 1
+      let armX;
+      if (p < 0.32) {                    // windup: crouch, sword back over the shoulder
+        const k = p / 0.32; armX = -3.0 * k; this._braverY = -0.18 * k;
+      } else if (p < 0.72) {             // leap + downward cleave
+        const k = (p - 0.32) / 0.4; armX = -3.0 + 5.4 * k; this._braverY = Math.sin(k * Math.PI) * 1.9;
+        this._braverFwd = Math.sin(k * Math.PI) * 1.3;
+      } else {                            // land + recover
+        const k = (p - 0.72) / 0.28; armX = 2.4 * (1 - k);
+      }
+      this.armGroup.rotation.x = armX;
+      if (this.mesh) this.mesh.rotation.z = 0;
+    } else if (this.chargeTimer > 0) {
       this.chargeTimer -= dt;
       this.armGroup.rotation.x = 2.6 + Math.sin(performance.now() * 0.05) * 0.12;
       this.mesh && (this.mesh.rotation.z = Math.sin(performance.now() * 0.06) * 0.03);
@@ -226,10 +246,20 @@ export class Player {
     const bob = moving ? Math.abs(Math.sin(t)) * 0.06 : 0;
 
     this.mesh.position.copy(this.position);
-    this.mesh.position.y = bob;
+    this.mesh.position.y = bob + this._braverY;
+    if (this._braverFwd) {
+      this.mesh.position.x += Math.sin(this.facing) * this._braverFwd;
+      this.mesh.position.z += Math.cos(this.facing) * this._braverFwd;
+    }
     this.mesh.rotation.y = this.facing;
 
     this._updateCamera(dt);
+  }
+
+  /** Start the Braver leaping-slash animation, facing `angle`. */
+  braver(angle) {
+    if (typeof angle === 'number') this.facing = angle;
+    this.braverTimer = this.braverDur;
   }
 
   _resolveCollision(next) {

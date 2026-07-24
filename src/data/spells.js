@@ -17,8 +17,8 @@
 
 export const SPELLS = [
   // ---- Starting blade arts (equipped to , . / by default) ----
-  { id: 'fireball',  name: 'Braver', icon: '🗡️', type: 'magic', target: 'enemy', power: 30, mpCost: 18, cooldown: 0.9, speed: 26, splash: 2.4, element: 'fire', startsLearned: true,
-    description: 'A blazing overhead sword slash hurled forward.' },
+  { id: 'fireball',  name: 'Braver', icon: '🗡️', type: 'magic', target: 'enemy', power: 34, mpCost: 18, cooldown: 1.1, speed: 30, splash: 2.4, element: 'fire', anim: 'leap', startsLearned: true,
+    description: 'A leaping overhead sword slash that cleaves the ground.' },
   { id: 'frostbolt', name: 'Cryo Edge', icon: '❄️', type: 'magic', target: 'enemy', power: 20, mpCost: 12, cooldown: 0.55, speed: 32, splash: 0, slow: 0.55, slowDuration: 3, element: 'ice', startsLearned: true,
     description: 'A chilling blade wave that slows. (Cryo units absorb it!)' },
   { id: 'renew',     name: 'Recovery', icon: '✚', type: 'heal', target: 'self', power: 45, mpCost: 28, cooldown: 3.5, element: 'holy', startsLearned: true,

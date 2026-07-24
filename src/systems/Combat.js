@@ -201,10 +201,70 @@ export class Combat {
     }
     dir.y = Math.max(dir.y, -0.05);
     const color = { fire: 0xff5a1e, ice: 0x5ac8ff, holy: 0x9bffb0, thunder: 0xffe14a, dark: 0xb06bff }[spell.element] || 0xffffff;
+
+    // Braver (and any 'leap' art): a leaping overhead slash instead of a plain cast
+    if (spell.anim === 'leap') { this._leapCast(spell, dir, color); return; }
+
     this.player.charge(0.22);                 // brief wind-up pose
     this._chargeOrb(color, 0.22, 1.2);        // energy gathers at the blade
     this._castSlash(spell, dir);
     this.projectiles.push(new Projectile(this.scene, spell, origin, dir));
+  }
+
+  /** BRAVER — leap up, cleave down, release a blade wave + ground shock. */
+  _leapCast(spell, dir, color) {
+    this.player.braver(Math.atan2(dir.x, dir.z));   // face the strike
+    this._chargeOrb(color, 0.28, 0.9);              // gather at the raised blade
+
+    // At the downward-cleave moment: big vertical slash + launch the wave
+    setTimeout(() => {
+      this._braverSlash(color);
+      const o = this.player.position.clone(); o.y = 1.6;
+      this.projectiles.push(new Projectile(this.scene, spell, o, dir));
+    }, 270);
+
+    // Landing impact ring
+    setTimeout(() => this._groundRing(color), 490);
+  }
+
+  _braverSlash(color) {
+    const fwd = new THREE.Vector3(Math.sin(this.player.facing), 0, Math.cos(this.player.facing));
+    const pos = this.player.position.clone().addScaledVector(fwd, 1.5); pos.y = 1.9;
+    const arc = new THREE.Mesh(
+      new THREE.TorusGeometry(1.7, 0.18, 8, 18, Math.PI * 1.15),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95, side: THREE.DoubleSide }));
+    arc.position.copy(pos);
+    arc.lookAt(pos.clone().add(fwd));      // face along travel
+    arc.rotation.z = Math.PI / 2;          // orient as a vertical downward sweep
+    this.scene.add(arc);
+    const light = new THREE.PointLight(color, 9, 9, 2); light.position.copy(pos); this.scene.add(light);
+    const t0 = performance.now();
+    const anim = () => {
+      const t = (performance.now() - t0) / 260;
+      if (t >= 1) { this.scene.remove(arc); this.scene.remove(light); arc.geometry.dispose(); arc.material.dispose(); return; }
+      arc.scale.set(1, 1 + t * 0.7, 1);
+      arc.material.opacity = 0.95 * (1 - t);
+      light.intensity = 9 * (1 - t);
+      requestAnimationFrame(anim);
+    };
+    anim();
+  }
+
+  _groundRing(color) {
+    const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85, side: THREE.DoubleSide });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.9, 32), mat);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.copy(this.player.position); ring.position.y = 0.08;
+    this.scene.add(ring);
+    const t0 = performance.now();
+    const anim = () => {
+      const t = (performance.now() - t0) / 380;
+      if (t >= 1) { this.scene.remove(ring); ring.geometry.dispose(); mat.dispose(); return; }
+      ring.scale.setScalar(1 + t * 7);
+      mat.opacity = 0.85 * (1 - t);
+      requestAnimationFrame(anim);
+    };
+    anim();
   }
 
   /** A gathering energy orb at the hero's blade while an art charges. */

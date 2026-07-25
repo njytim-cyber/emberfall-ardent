@@ -25,7 +25,7 @@ import { SPELLS_BY_ID } from '../data/spells.js';
 import { CONFIG } from '../data/config.js';
 
 const QUICK_KEYS = [',', '.', '/'];
-const CHAPTER_NAMES = { 1: 'THE DEEP WOOD', 2: 'THE BLIGHTED EDGE', 3: 'THE CITY GATE', 4: 'VANCE AVENUE', 5: 'THE PLAZA' };
+const CHAPTER_NAMES = { 1: 'THE DEEP WOOD', 2: 'THE BLIGHTED EDGE', 3: 'THE SLUMS', 4: 'THE INNER CITY', 5: 'THE PLAZA' };
 
 export class Game {
   constructor(canvas) {
@@ -257,19 +257,20 @@ export class Game {
     const f = this.story.flags;
     const W = CONFIG.world;
     const beats = [
-      [z <= 230 && !f.forestOmenShown, () => this.story.reachOmen()],                                   // Ch.1 omen
-      [z <= W.forestMidZ && !f.forestMidShown, () => this.story.reachForestMid()],                       // Ch.2
-      [z <= W.forestEndZ && !f.cityReached, () => this.story.reachCity()],                               // Ch.3
-      [z <= -42 && f.cityReached && !f.cityMidShown, () => this.story.reachCityMid()],
-      [z <= W.avenueZ && f.cityReached && !f.avenueReached, () => this.story.reachAvenue()],             // Ch.4
-      [z <= -158 && f.avenueReached && !f.preBossShown, () => this.story.reachPreBoss()],
+      [z <= 250 && !f.forestOmenShown, () => this.story.reachOmen()],                                    // Ch.1 omen
+      [z <= W.forestMidZ && !f.forestMidShown, () => this.story.reachForestMid()],                        // Ch.2
+      [z <= W.forestEndZ && !f.cityReached, () => this.story.reachCity()],                                // Ch.3 slums
+      [z <= W.slumsZ && f.cityReached && !f.cityMidShown, () => this.story.reachCityMid()],
+      [z <= W.avenueZ && f.cityReached && !f.avenueReached, () => this.story.reachAvenue()],              // Ch.4 inner city
+      [z <= 14 && f.avenueReached && !f.preBossShown, () => this.story.reachPreBoss()],
     ];
     for (const [cond, fn] of beats) {
       if (cond) { this._setFocus(this.player.position, 'orbit'); this._runCutscene(fn); return; }
     }
 
-    // President Vance appears at the plaza (Chapter 4)
-    if (this.story.canFightBoss() && this.player.position.distanceTo(this.town.bossPos) < 22) {
+    // President Vance appears at the plaza — only once every group is cleared
+    if (this.story.canFightBoss() && this.combat.wavesDone && this.combat.livingCount === 0 &&
+        this.player.position.distanceTo(this.town.bossPos) < 20) {
       this._triggerBoss();
       return;
     }

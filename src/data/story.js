@@ -53,7 +53,7 @@ export const SCENES = {
     { speaker: 'Nyx', portrait: '👩‍💻', text: 'Straight down Vance Avenue to the central plaza. That\'s where SUNSET runs, that\'s where the drain terminates, and that\'s where Vance holds court like it\'s a throne room.' },
     { speaker: 'Nyx', portrait: '👩‍💻', text: 'Bad news: the whole avenue is a Helix security gauntlet — grunts, recon drones, riot troopers, and worse the closer you get. Good news: I can thin their firewalls as you go.' },
     { speaker: 'Rae', portrait: '🧑‍🚀', text: 'The wood is counting on you, Cade. Every second we talk, another tree goes dark. Get through that city.' },
-    { speaker: 'Narrator', portrait: '📻', text: 'CHAPTER 3 — THE CITY GATE', mood: 'dark' },
+    { speaker: 'Narrator', portrait: '📻', text: 'CHAPTER 3 — THE SLUMS', mood: 'dark' },
   ],
 
   city_mid: [
@@ -64,7 +64,7 @@ export const SCENES = {
 
   // ================= CHAPTER 3 — Vance Avenue =================
   chapter3: [
-    { speaker: 'Narrator', portrait: '📻', text: 'CHAPTER 4 — VANCE AVENUE', mood: 'dark' },
+    { speaker: 'Narrator', portrait: '📻', text: 'CHAPTER 4 — THE INNER CITY', mood: 'dark' },
     { speaker: 'President Vance', portrait: '👔', text: 'So the forest sent a champion. How quaint. I\'ve watched you carve through my androids on forty cameras, warden. You have my attention.', mood: 'boss' },
     { speaker: 'Cade (You)', portrait: '🕶️', text: 'Cut the drain-line, Vance. Give the wood back its heart, and I\'ll walk out of your city.', mood: 'hero' },
     { speaker: 'President Vance', portrait: '👔', text: 'That "heart" is the cleanest, cheapest, most reliable power this city has ever had. Do you know what light cost the people of Ardent before me? Everything.', mood: 'boss' },

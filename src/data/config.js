@@ -39,18 +39,23 @@ export const CONFIG = {
     leashRange: 30,      // gives up and returns home beyond this
   },
 
-  // --- World: a long WINDING journey — deep forest → edge → city → plaza ---
+  // --- World: a CIRCLE. Plaza tower at the centre, city ringed around it,
+  //     forest surrounding that. You spiral inward along a winding spoke.
+  //     "z" is the radial distance from the centre (300 = outer forest, 6 = plaza).
   world: {
-    streetHalfWidth: 9,        // narrower forest-trail feel
-    plazaHalfWidth: 24,        // wider open area at the boss plaza
-    startZ: 300,               // spawn: deep in the Emberwood (long forest)
-    forestMidZ: 150,           // deep wood → blighted edge (chapter beat)
-    forestEndZ: 4,             // the wood gives way to the city gate here
-    endZ: -200,                // far end (behind the boss plaza)
-    plazaZ: -192,              // where President Vance waits
-    avenueZ: -70,              // deeper into the city (chapter beat)
-    fogNear: 42,
-    fogFar: 165,               // keeps the city hidden until you round the bends
+    streetHalfWidth: 9,        // half-width of the inward spoke path
+    plazaHalfWidth: 26,        // open plaza at the centre
+    startZ: 300,               // spawn: outer edge of the Emberwood
+    forestMidZ: 170,           // deep wood → blighted edge (chapter beat)
+    forestEndZ: 66,            // forest gives way to the city ring here
+    slumsZ: 40,                // the slums (chapter beat)
+    avenueZ: 22,               // inner city, approaching the plaza
+    plazaZ: 6,                 // the central plaza / tower
+    endZ: 0,                   // dead centre
+    cityInnerR: 26,            // inner radius of the city ring
+    cityOuterR: 60,            // outer radius of the city ring
+    fogNear: 40,
+    fogFar: 150,               // keeps the centre hidden until you spiral in
   },
 
   // --- Camera (third person) ---

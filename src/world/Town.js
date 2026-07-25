@@ -1,9 +1,9 @@
 /* ============================================================
-   World — a long, WINDING journey. The walkable corridor snakes
-   left and right (pathCenterX) so you can't see the city when you
-   spawn deep in the Emberwood; you round the bends, break through
-   a gate, and descend into the towering city of Ardent, ending at
-   Vance's plaza. Everything is placed relative to the centre-line.
+   World — a CIRCLE. The Helix plaza tower stands at the centre;
+   the city of Ardent is ringed around it; the Emberwood surrounds
+   the whole thing. You spiral inward along a winding spoke path
+   from the outer forest, through the slums, to the central plaza.
+   "z" is radial distance from centre (handled by the Player clamp).
    ============================================================ */
 
 import * as THREE from 'three';
@@ -23,15 +23,14 @@ export class Town {
     this._signs = [];
 
     this.playerSpawn = new THREE.Vector3(cx(W.startZ - 4), 0, W.startZ - 4);
-    this.raePos = new THREE.Vector3(cx(W.startZ - 10) + 5, 0, W.startZ - 10);
-    this.docPos = new THREE.Vector3(cx(-24) - 8, 0, -24);
+    this.raePos = new THREE.Vector3(cx(W.startZ - 10) + 4, 0, W.startZ - 10);
+    this.docPos = new THREE.Vector3(cx(46) + (W.streetHalfWidth - 1), 0, 46);
     this.bossPos = new THREE.Vector3(cx(W.plazaZ), 0, W.plazaZ);
 
     this._buildGround();
     this._buildForest();
-    this._buildGate();
-    this._buildCity();
-    this._buildSkyline();
+    this._buildForestRing();
+    this._buildCityRing();
     this._buildPlaza();
   }
 
@@ -42,35 +41,36 @@ export class Town {
     });
   }
 
+  /** True if a world point sits on the walkable inward spoke (carve it clear). */
+  _inCorridor(x, z, margin = 5) {
+    return z > W.endZ && z < W.startZ && Math.abs(x - cx(z)) < W.streetHalfWidth + margin;
+  }
+
   // ---------------------------------------------------------
   _buildGround() {
-    const len = Math.abs(W.startZ - W.endZ) + 120;
-    // Forest floor base (well below the path to avoid any z-fighting)
-    const moss = new THREE.Mesh(new THREE.PlaneGeometry(360, len),
+    // Big forest-floor disc under everything
+    const moss = new THREE.Mesh(new THREE.CircleGeometry(W.startZ + 40, 64),
       this._mat(0x37622f, { map: getTexture('grass'), roughness: 1 }));
-    moss.rotation.x = -Math.PI / 2; moss.position.set(0, -0.08, (W.startZ + W.endZ) / 2);
-    moss.receiveShadow = true; this.group.add(moss);
+    moss.rotation.x = -Math.PI / 2; moss.position.y = -0.08; moss.receiveShadow = true; this.group.add(moss);
 
-    // City ground patch (darker), sits between moss and path
-    const cityLen = Math.abs(W.forestEndZ - W.endZ) + 40;
-    const city = new THREE.Mesh(new THREE.PlaneGeometry(300, cityLen), this._mat(0x23242c, { roughness: 0.8 }));
-    city.rotation.x = -Math.PI / 2; city.position.set(0, -0.04, (W.forestEndZ + W.endZ) / 2);
-    city.receiveShadow = true; this.group.add(city);
+    // City-ring ground (dark asphalt disc)
+    const city = new THREE.Mesh(new THREE.CircleGeometry(W.cityOuterR + 6, 56), this._mat(0x23242c, { roughness: 0.8 }));
+    city.rotation.x = -Math.PI / 2; city.position.y = -0.04; city.receiveShadow = true; this.group.add(city);
 
     this._buildPathRibbon();
   }
 
-  /** One continuous winding ribbon that follows the centre-line — no overlaps. */
+  /** One continuous winding ribbon that spirals inward — no overlaps. */
   _buildPathRibbon() {
     const half = W.streetHalfWidth + 1;
     const pos = [], uv = [], idx = [];
     let rows = 0;
     for (let z = W.startZ; z >= W.endZ; z -= 5) {
       const c = cx(z);
-      const dcx = cx(z - 1) - cx(z + 1);          // dx over dz = -2
+      const dcx = cx(z - 1) - cx(z + 1);
       const len = Math.hypot(dcx, -2);
-      const px = 2 / len, pz = dcx / len;          // perpendicular to the path
-      pos.push(c + px * half, 0, z + pz * half,  c - px * half, 0, z - pz * half);
+      const px = 2 / len, pz = dcx / len;
+      pos.push(c + px * half, 0, z + pz * half, c - px * half, 0, z - pz * half);
       uv.push(0, rows * 0.12, 1, rows * 0.12);
       rows++;
     }
@@ -83,15 +83,14 @@ export class Town {
     geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
     geo.setIndex(idx); geo.computeVertexNormals();
     const mesh = new THREE.Mesh(geo, this._mat(0x59544a, { map: getTexture('cobble'), roughness: 0.9 }));
-    mesh.position.y = 0.0; mesh.receiveShadow = true; this.group.add(mesh);
+    mesh.receiveShadow = true; this.group.add(mesh);
   }
 
   // ---------------------------------------------------------
-  //  The Emberwood (long + winding)
+  //  The Emberwood (dense along the spoke)
   // ---------------------------------------------------------
   _buildForest() {
-    // Dense wall of trees — ranks packed right up to the trail edge
-    for (let z = W.startZ - 2; z > W.forestEndZ + 4; z -= 6.5) {
+    for (let z = W.startZ - 2; z > W.forestEndZ - 4; z -= 6.5) {
       const c = cx(z);
       for (const sx of [-1, 1]) {
         for (let rank = 0; rank < 3; rank++) {
@@ -107,24 +106,32 @@ export class Town {
     }
   }
 
+  /** A ring of big trees encircling the whole city — "forest surrounding it". */
+  _buildForestRing() {
+    const r = W.forestEndZ + 8;
+    for (let k = 0; k < 60; k++) {
+      const a = (k / 60) * Math.PI * 2;
+      const x = Math.sin(a) * (r + (Math.random() - 0.5) * 10);
+      const z = Math.cos(a) * (r + (Math.random() - 0.5) * 10);
+      if (this._inCorridor(x, z, 8)) continue;   // leave the gate open
+      this._tree(x, z, true);
+    }
+  }
+
   _tree(x, z, edge) {
     const g = new THREE.Group(); g.position.set(x, 0, z);
     const glow = [0x6bff9b, 0x6be0ff, 0xb08bff][Math.floor(Math.random() * 3)];
     const h = 9 + Math.random() * 8;
     const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.75, h, 7), this._mat(0x2a221c, { roughness: 1 }));
     trunk.position.y = h / 2; trunk.castShadow = true; g.add(trunk);
-    // Big overlapping canopy — forms a leafy wall/ceiling
     const shade = [0x24401f, 0x1c3a1c, 0x2b4a24][Math.floor(Math.random() * 3)];
     for (let i = 0; i < 3; i++) {
-      const r = (3.4 - i * 0.6) * (0.9 + Math.random() * 0.35);
-      const cl = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 7),
-        this._mat(shade, { emissive: glow, emissiveIntensity: 0.35, roughness: 0.95 }));
-      cl.position.set((Math.random() - 0.5) * 1.6, h + i * 1.4, (Math.random() - 0.5) * 1.6);
-      cl.castShadow = true; g.add(cl);
+      const rr = (3.4 - i * 0.6) * (0.9 + Math.random() * 0.35);
+      const cl = new THREE.Mesh(new THREE.SphereGeometry(rr, 8, 7), this._mat(shade, { emissive: glow, emissiveIntensity: 0.35, roughness: 0.95 }));
+      cl.position.set((Math.random() - 0.5) * 1.6, h + i * 1.4, (Math.random() - 0.5) * 1.6); cl.castShadow = true; g.add(cl);
     }
     if (Math.random() < 0.04) { const l = new THREE.PointLight(glow, 5, 18, 2); l.position.set(0, h * 0.8, 0); g.add(l); }
     this.group.add(g);
-    // Only the front rank blocks the player (keeps collisions cheap)
     if (edge) this.obstacles.push({ type: 'circle', x, z, r: 0.9 });
   }
 
@@ -161,24 +168,9 @@ export class Town {
   }
 
   // ---------------------------------------------------------
-  _buildGate() {
-    const z = W.forestEndZ, c = cx(z);
-    const stone = this._mat(0x50535c, { roughness: 0.9, metalness: 0.2 });
-    for (const sx of [-1, 1]) {
-      const pillar = new THREE.Mesh(new THREE.BoxGeometry(3.5, 16, 3.5), stone);
-      pillar.position.set(c + sx * (W.streetHalfWidth + 2.5), 8, z); pillar.castShadow = true; this.group.add(pillar);
-      this.obstacles.push({ type: 'box', x: c + sx * (W.streetHalfWidth + 2.5), z, hw: 1.8, hd: 1.8 });
-    }
-    const lintel = new THREE.Mesh(new THREE.BoxGeometry(W.streetHalfWidth * 2 + 9, 3.5, 3.5), stone);
-    lintel.position.set(c, 17, z); lintel.castShadow = true; this.group.add(lintel);
-    const sign = new THREE.Mesh(new THREE.BoxGeometry(14, 2.4, 0.5), this._mat(0x111, { emissive: 0xff3b5c, emissiveIntensity: 2 }));
-    sign.position.set(c, 17, z + 1.9); this.group.add(sign); this._signs.push({ mat: sign.material, phase: 0 });
-  }
-
+  //  The city of Ardent — a ring of buildings around the plaza
   // ---------------------------------------------------------
-  //  The city of Ardent — bigger and taller
-  // ---------------------------------------------------------
-  _buildCity() {
+  _buildCityRing() {
     const palettes = [
       { wall: 0x8892a0, glow: 0x66ccff, sign: 0xff4d6d },
       { wall: 0x6d7480, glow: 0xffa94d, sign: 0x4dd0e1 },
@@ -186,31 +178,22 @@ export class Town {
       { wall: 0x5c636f, glow: 0x5ce0a0, sign: 0xff6d4d },
     ];
     let i = 0;
-    for (let z = W.forestEndZ - 8; z > W.plazaZ + 18; z -= 15) {
-      const c = cx(z);
-      for (const sx of [-1, 1]) {
-        const x = c + sx * (W.streetHalfWidth + 11 + Math.random() * 3);
-        this._building(x, z + (Math.random() - 0.5) * 3, sx, palettes[i % palettes.length], 1);
-        this._streetLight(c + sx * (W.streetHalfWidth + 2.5), z + 7);
+    // two concentric rings of buildings
+    for (const r of [W.cityInnerR + 4, W.cityInnerR + 20, W.cityOuterR - 4]) {
+      const count = Math.max(8, Math.round(r / 4));
+      for (let k = 0; k < count; k++) {
+        const a = (k / count) * Math.PI * 2 + (r * 0.05);
+        const x = Math.sin(a) * r, z = Math.cos(a) * r;
+        if (this._inCorridor(x, z, 7)) continue;   // gate gap for the spoke
+        this._building(x, z, Math.atan2(x, z), palettes[i % palettes.length], r > W.cityInnerR + 15 ? 1.4 : 1);
         i++;
       }
     }
-  }
-
-  /** Distant, low-detail skyscraper skyline for scale (few meshes each). */
-  _buildSkyline() {
-    for (let z = W.forestEndZ - 20; z > W.plazaZ + 10; z -= 26) {
+    // street lamps flanking the spoke through the city
+    for (let z = W.forestEndZ; z > W.plazaZ + 6; z -= 12) {
       const c = cx(z);
-      for (const sx of [-1, 1]) {
-        const x = c + sx * (W.streetHalfWidth + 34 + Math.random() * 24);
-        const h = 45 + Math.random() * 45, w = 12 + Math.random() * 10;
-        const tower = new THREE.Mesh(new THREE.BoxGeometry(w, h, w),
-          this._mat(0x2b303a, { emissive: [0x22384f, 0x3a2f4a][i2n(x)], emissiveIntensity: 0.25, roughness: 0.6, metalness: 0.4 }));
-        tower.position.set(x, h / 2, z); this.group.add(tower);
-        const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.4, 6, 6), this._mat(0x300, { emissive: 0xff0000, emissiveIntensity: 2 }));
-        beacon.position.set(x, h + 1, z); this.group.add(beacon);
-        this._signs.push({ mat: beacon.material, phase: Math.random() * 6, beacon: true });
-      }
+      this._streetLight(c - (W.streetHalfWidth + 2), z);
+      this._streetLight(c + (W.streetHalfWidth + 2), z);
     }
   }
 
@@ -219,28 +202,27 @@ export class Town {
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 6, 8), this._mat(0x33363d, { metalness: 0.6, roughness: 0.5 }));
     pole.position.y = 3; pole.castShadow = true; g.add(pole);
     const lamp = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.2, 0.3), this._mat(0x222, { emissive: 0xfff2c0, emissiveIntensity: 1 }));
-    lamp.position.set(x > 0 ? -1.2 : 1.2, 5.7, 0); g.add(lamp);
+    lamp.position.y = 5.7; g.add(lamp);
     this.group.add(g); this.obstacles.push({ type: 'circle', x, z, r: 0.4 });
   }
 
-  _building(x, z, sx, pal) {
-    const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = sx > 0 ? -Math.PI / 2 : Math.PI / 2;
+  _building(x, z, faceAngle, pal, tall) {
+    const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = faceAngle + Math.PI;   // face the centre
     const wallTex = getTexture('plaster', '#ffffff');
-    const depth = 15 + Math.random() * 7, baseW = 14 + Math.random() * 6;
-    const tiers = 3 + Math.floor(Math.random() * 3);
+    const depth = 12 + Math.random() * 6, baseW = 12 + Math.random() * 6;
+    const tiers = 2 + Math.floor(Math.random() * 3);
     let h = 0, w = baseW, d = depth;
     for (let t = 0; t < tiers; t++) {
-      const th = 11 + Math.random() * 12;
+      const th = (10 + Math.random() * 10) * tall;
       const body = new THREE.Mesh(new THREE.BoxGeometry(w, th, d), this._mat(pal.wall, { map: wallTex, roughness: 0.75, metalness: 0.25 }));
       body.position.set(0, h + th / 2, 0); body.castShadow = body.receiveShadow = true; g.add(body);
       this._windows(g, w, th, d, h, pal.glow);
       h += th; w *= 0.82; d *= 0.86;
     }
-    this._rooftop(g, w, d, h);
-    const store = new THREE.Mesh(new THREE.BoxGeometry(baseW + 0.4, 3.4, depth + 0.4), this._mat(0x2a2c32, { roughness: 0.7 }));
-    store.position.set(0, 1.7, 0); g.add(store);
-    const sign = new THREE.Mesh(new THREE.BoxGeometry(baseW * 0.55, 1.2, 0.2), this._mat(0x111, { emissive: pal.sign, emissiveIntensity: 1.6 }));
-    sign.position.set(0, 5, depth / 2 + 0.15); g.add(sign); this._signs.push({ mat: sign.material, phase: Math.random() * 6 });
+    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), this._mat(0x330000, { emissive: 0xff0000, emissiveIntensity: 2 }));
+    beacon.position.set(w * 0.25, h + 2, d * 0.1); g.add(beacon); this._signs.push({ mat: beacon.material, phase: Math.random() * 6, beacon: true });
+    const sign = new THREE.Mesh(new THREE.BoxGeometry(baseW * 0.55, 1.1, 0.2), this._mat(0x111, { emissive: pal.sign, emissiveIntensity: 1.6 }));
+    sign.position.set(0, 4.6, depth / 2 + 0.15); g.add(sign); this._signs.push({ mat: sign.material, phase: Math.random() * 6 });
     this.group.add(g);
     const co = Math.abs(Math.cos(g.rotation.y)), si = Math.abs(Math.sin(g.rotation.y));
     this.obstacles.push({ type: 'box', x, z, hw: (baseW / 2) * co + (depth / 2) * si, hd: (baseW / 2) * si + (depth / 2) * co });
@@ -256,37 +238,28 @@ export class Town {
     }
   }
 
-  _rooftop(g, w, d, h) {
-    const metal = this._mat(0x44484f, { metalness: 0.6, roughness: 0.5 });
-    const tank = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 2.2, 12), this._mat(0x6b5a45, { roughness: 0.8 }));
-    tank.position.set(-w * 0.2, h + 1.1, -d * 0.15); tank.castShadow = true; g.add(tank);
-    const ac = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.9, 1.3), metal);
-    ac.position.set((Math.random() - 0.5) * w * 0.6, h + 0.45, (Math.random() - 0.5) * d * 0.5); g.add(ac);
-    const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.18, 8, 8), this._mat(0x330000, { emissive: 0xff0000, emissiveIntensity: 2 }));
-    beacon.position.set(w * 0.25, h + 2, d * 0.1); g.add(beacon); this._signs.push({ mat: beacon.material, phase: Math.random() * 6, beacon: true });
-  }
-
+  // ---------------------------------------------------------
+  //  The central plaza + Helix command tower
   // ---------------------------------------------------------
   _buildPlaza() {
-    const c = cx(W.plazaZ);
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(W.plazaHalfWidth * 2 + 12, 46),
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(W.plazaHalfWidth, 48),
       this._mat(0x3a3d45, { map: getTexture('cobble'), roughness: 0.7, metalness: 0.2 }));
-    floor.rotation.x = -Math.PI / 2; floor.position.set(c, 0.02, W.plazaZ - 3); floor.receiveShadow = true; this.group.add(floor);
+    floor.rotation.x = -Math.PI / 2; floor.position.y = 0.02; floor.receiveShadow = true; this.group.add(floor);
 
-    // Towering Helix HQ backdrop
-    const g = new THREE.Group(); g.position.set(cx(W.endZ + 6), 0, W.endZ + 6);
-    let h = 0, w = 38, d = 20;
+    // The command tower dead centre
+    const g = new THREE.Group(); g.position.set(0, 0, -2);
+    let h = 0, w = 26, d = 26;
     for (let t = 0; t < 6; t++) {
       const th = 16 + t * 3;
       const body = new THREE.Mesh(new THREE.BoxGeometry(w, th, d), this._mat(0x30343c, { roughness: 0.5, metalness: 0.5 }));
       body.position.set(0, h + th / 2, 0); body.castShadow = true; g.add(body);
       this._windows(g, w, th, d, h, 0xffd36b);
-      h += th; w *= 0.84; d *= 0.87;
+      h += th; w *= 0.86; d *= 0.86;
     }
-    const logo = new THREE.Mesh(new THREE.BoxGeometry(26, 4.5, 0.5), this._mat(0x111, { emissive: 0xff3b5c, emissiveIntensity: 2 }));
-    logo.position.set(0, 26, d / 2 + 10); g.add(logo); this._signs.push({ mat: logo.material, phase: 0 });
+    const logo = new THREE.Mesh(new THREE.BoxGeometry(20, 4, 0.5), this._mat(0x111, { emissive: 0xff3b5c, emissiveIntensity: 2 }));
+    logo.position.set(0, 22, 13.4); g.add(logo); this._signs.push({ mat: logo.material, phase: 0 });
     this.group.add(g);
-    this.obstacles.push({ type: 'box', x: cx(W.endZ + 6), z: W.endZ + 6, hw: 20, hd: 11 });
+    this.obstacles.push({ type: 'box', x: 0, z: -2, hw: 13, hd: 13 });
   }
 
   update(dt, elapsed) {
@@ -297,6 +270,3 @@ export class Town {
     }
   }
 }
-
-// tiny deterministic pick helper for skyline tint
-function i2n(x) { return Math.abs(Math.round(x)) % 2; }

@@ -92,6 +92,35 @@ export const SCENES = {
 
   boss_phase: [{ speaker: 'President Vance', portrait: '👔', text: 'You think this HURTS me? EMP surge — freeze where you stand, and watch your precious wood go dark for good!', mood: 'boss' }],
 
+  enter_tower: [
+    { speaker: 'Narrator', portrait: '🏢', text: 'The command-tower doors seal behind you. A cold lobby of glass and steel rises floor upon floor toward the top.', mood: 'dark' },
+    { speaker: 'Nyx', portrait: '👩‍💻', text: 'I\'ve spoofed the internal locks, Cade — the escalators are live. But every floor between you and Vance is a kill-box. Fight up. I\'ll keep the lifts running.' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Then it\'s a long way up. Clear a floor, ride the escalator, repeat. Let\'s go.', mood: 'hero' },
+    { speaker: 'Narrator', portrait: '⬆️', text: 'OBJECTIVE: Clear each floor, then step onto the escalator to climb to the next.', mood: 'dark' },
+  ],
+
+  controller_appear: [
+    { speaker: 'Narrator', portrait: '🟣', text: 'The escalator opens onto a dim floor. A tall figure waits in the dark, unmoving — and behind its eyes, a hundred screens flicker.', mood: 'dark' },
+    { speaker: 'The Unit Controller', portrait: '🕴️', text: 'Warden. I have watched you through every camera, every drone, every unit you\'ve destroyed. I AM those units. Every one you killed… I felt.', mood: 'boss' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Then you already know how this ends.', mood: 'hero' },
+    { speaker: 'The Unit Controller', portrait: '🕴️', text: 'I know how it ends for a man who thinks he fights an army of machines… and never noticed the ONE mind behind them all. Let me correct you.', mood: 'boss' },
+  ],
+
+  controller_defeat: [
+    { speaker: 'The Unit Controller', portrait: '💠', text: 'Impossible… I was the perfect operator… every unit, one will…', mood: 'boss' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'That was the flaw. Cut off the head, the whole net goes dark. Vance is next.', mood: 'hero' },
+    { speaker: 'Nyx', portrait: '👩‍💻', text: 'Cade — the second that thing dropped, half of Helix\'s security just went offline. The top floor\'s wide open. Vance is up there. Alone.' },
+  ],
+
+  vance_top: [
+    { speaker: 'Narrator', portrait: '🌆', text: 'THE TOP FLOOR. Glass on every side, the whole grey city spread out below. At the centre, a throne of screens — and the pillar of stolen green light punching up through the floor into the sky.', mood: 'dark' },
+    { speaker: 'President Vance', portrait: '👔', text: 'You climbed my whole tower. Killed my Controller. All for a patch of trees. I almost admire it. Almost.', mood: 'boss' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Shut down SUNSET, Vance. Give the wood back its heart.', mood: 'hero' },
+    { speaker: 'President Vance', portrait: '👔', text: 'It IS the heart now. Mine. And I don\'t give back what I\'ve earned.', mood: 'boss' },
+    { speaker: 'Narrator', portrait: '⚡', text: 'Vance sets down his tablet and rolls his cuffs. Twin blades of hard light ignite from his sleeves.', mood: 'dark' },
+    { speaker: 'President Vance', portrait: '👔', text: 'Come, warden. Let me show you what real power costs.', mood: 'boss' },
+  ],
+
   boss_flee: [
     { speaker: 'President Vance', portrait: '👔', text: 'Enough. Enough! This is— this is a ROUT. Security! Get me to the roof, get me the lift, get me—', mood: 'boss' },
     { speaker: 'Narrator', portrait: '🏃', text: 'His blades sputter out. Vance turns on his heel and bolts for a waiting executive lift.', mood: 'dark' },

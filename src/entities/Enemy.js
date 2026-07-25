@@ -357,7 +357,7 @@ export class Enemy {
     else if (moveDir) y += Math.abs(Math.sin(now * 0.015)) * 0.08;
 
     this.mesh.position.copy(this.position);
-    this.mesh.position.y = y;
+    this.mesh.position.y = this.position.y + y;
     this.mesh.position.x += Math.sin(this.facing) * lungeOffset;
     this.mesh.position.z += Math.cos(this.facing) * lungeOffset;
     this.mesh.rotation.y = this.facing;

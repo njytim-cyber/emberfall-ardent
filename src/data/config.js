@@ -56,6 +56,8 @@ export const CONFIG = {
     cityOuterR: 60,            // outer radius of the city ring
     fogNear: 40,
     fogFar: 150,               // keeps the centre hidden until you spiral in
+    // The command-tower interior, built far offset so it never overlaps the map
+    interior: { x: 1000, z: 0, roomHalf: 19, floorHeight: 12, floors: 4 },
   },
 
   // --- Camera (third person) ---

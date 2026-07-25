@@ -35,6 +35,10 @@ export class Player {
     this.rootTimer = 0;          // > 0 => frozen in place (can't move)
     this.freezeImmuneTimer = 0;  // brief immunity so you can't be chain-frozen
 
+    // --- Interior (tower) mode ---
+    this.interiorMode = false;
+    this.floorY = 0;
+
     // --- Dash ability ---
     this.dashTimer = 0;
     this.dashCd = 0;
@@ -324,7 +328,7 @@ export class Player {
     const bob = moving ? Math.abs(Math.sin(t)) * 0.06 : 0;
 
     this.mesh.position.copy(this.position);
-    this.mesh.position.y = bob + this._braverY;
+    this.mesh.position.y = this.position.y + bob + this._braverY;
     if (this._braverFwd) {
       this.mesh.position.x += Math.sin(this.facing) * this._braverFwd;
       this.mesh.position.z += Math.cos(this.facing) * this._braverFwd;
@@ -349,6 +353,14 @@ export class Player {
   }
 
   _resolveCollision(next) {
+    // Inside the tower: clamp to the current floor room + lock to its height
+    if (this.interiorMode) {
+      const I = CONFIG.world.interior;
+      next.x = Math.max(I.x - I.roomHalf + 1, Math.min(I.x + I.roomHalf - 1, next.x));
+      next.z = Math.max(I.z - I.roomHalf + 1, Math.min(I.z + I.roomHalf - 1, next.z));
+      next.y = this.floorY;
+      return;
+    }
     const r = CONFIG.player.radius;
     for (const o of this.town.obstacles) {
       if (o.type === 'circle') {

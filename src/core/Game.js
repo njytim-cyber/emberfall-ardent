@@ -13,6 +13,7 @@ import { Input } from './Input.js';
 import { Director } from './Director.js';
 import { Environment } from '../world/Environment.js';
 import { Town } from '../world/Town.js';
+import { Interior } from '../world/Interior.js';
 import { Player } from '../entities/Player.js';
 import { NPC } from '../entities/NPC.js';
 import { Combat } from '../systems/Combat.js';
@@ -26,6 +27,8 @@ import { CONFIG } from '../data/config.js';
 
 const QUICK_KEYS = [',', '.', '/'];
 const CHAPTER_NAMES = { 1: 'THE DEEP WOOD', 2: 'THE BLIGHTED EDGE', 3: 'THE SLUMS', 4: 'THE INNER CITY', 5: 'THE PLAZA' };
+// Guard groups per command-tower floor (floors 2 & 3 are bosses)
+const INTERIOR_GROUPS = { 0: ['skeleton', 'wraith', 'wolf'], 1: ['revenant', 'frostward', 'iceshaman', 'wolf'] };
 
 export class Game {
   constructor(canvas) {
@@ -98,20 +101,31 @@ export class Game {
     this.combat.onLimitStart = () => { this.hud.limitFlash(); this._shake = 0.35; };
     this.combat.onLimitRelease = () => { this._shake = 0.75; };
     this._limitReady = false;
-    this.combat.onBossPhase = () => this._runCutscene(() => this.story.bossPhaseCallback());
-    this.combat.onBossDefeated = () => this._runCutscene(async () => {
-      const bossPos = this.combat.boss ? this.combat.boss.position.clone() : this.player.position.clone();
-      this.combat.boss = null;
-      this._setFocus(this.player.position, 'orbit');
-      await this.story.play('boss_flee');
-      // Cade draws from his back and finishes it — a decisive slash
-      this.player.inCombat = true;
-      this.player.braver(Math.atan2(bossPos.x - this.player.position.x, bossPos.z - this.player.position.z));
-      this.combat._braverSlash(0xff5a1e);
-      this._shake = 0.6;
-      await new Promise((r) => setTimeout(r, 850));
-      await this.story.onBossDefeated();       // grants Omnislash + plays the ending
-    });
+    this.combat.onBossPhase = (e) => { if (!e || e.bossId !== 'controller') this._runCutscene(() => this.story.bossPhaseCallback()); };
+    this.combat.onBossDefeated = (e) => {
+      const bossId = e && e.bossId;
+      if (bossId === 'controller') {
+        // Mid-tower boss — a cutscene, then keep climbing
+        return this._runCutscene(async () => {
+          this.combat.boss = null;
+          this._setFocus(this.player.position, 'orbit');
+          await this.story.play('controller_defeat');
+        });
+      }
+      // President Vance — flee, finish, ending
+      return this._runCutscene(async () => {
+        const bossPos = this.combat.boss ? this.combat.boss.position.clone() : this.player.position.clone();
+        this.combat.boss = null;
+        this._setFocus(this.player.position, 'orbit');
+        await this.story.play('boss_flee');
+        this.player.inCombat = true;
+        this.player.braver(Math.atan2(bossPos.x - this.player.position.x, bossPos.z - this.player.position.z));
+        this.combat._braverSlash(0xff5a1e);
+        this._shake = 0.6;
+        await new Promise((r) => setTimeout(r, 850));
+        await this.story.onBossDefeated();       // grants Omnislash + plays the ending
+      });
+    };
     this.combat.onPlayerDeath = () => this._gameOver();
     // A new group of enemies appears — auto lock-on to it
     this.combat.onWave = (wave) => {
@@ -124,6 +138,12 @@ export class Game {
     this.rae = new NPC(this.scene, this.town.raePos, { name: 'Rae', kind: 'npc' });
     this.doc = new NPC(this.scene, this.town.docPos, { name: 'Doc', kind: 'merchant' });
     this.nearbyNPC = null;
+
+    // --- The command-tower interior ---
+    this.interior = new Interior(this.scene);
+    this.interiorFloor = -1;
+    this._enteredTower = false;
+    this._floorTransitioning = false;
 
     this.clock = new THREE.Clock();
     this._elapsed = 0;
@@ -252,6 +272,9 @@ export class Game {
     }
     if (this.nearbyNPC && this.input.wasPressed('e')) { this._interact(); return; }
 
+    // Inside the command tower: climb floor by floor
+    if (this.player.interiorMode) { this._interiorProgress(); return; }
+
     // Position-triggered story beats (each fires once as you advance)
     const z = this.player.position.z;
     const f = this.story.flags;
@@ -268,14 +291,74 @@ export class Game {
       if (cond) { this._setFocus(this.player.position, 'orbit'); this._runCutscene(fn); return; }
     }
 
-    // President Vance appears at the plaza — only once every group is cleared
+    // Tower door — enter the command tower once the whole city is cleared
     if (this.story.canFightBoss() && this.combat.wavesDone && this.combat.livingCount === 0 &&
-        this.player.position.distanceTo(this.town.bossPos) < 20) {
-      this._triggerBoss();
-      return;
+        !this._enteredTower && this.player.position.distanceTo(this.town.bossPos) < 15) {
+      this.hud.setPrompt('Press E — enter the command tower');
+      if (this.input.wasPressed('e')) { this._enterInterior(); return; }
     }
 
     this.hud.setObjective(this.story.objective());
+  }
+
+  // ---------------------------------------------------------
+  //  The command-tower interior
+  // ---------------------------------------------------------
+  _enterInterior() {
+    this._enteredTower = true;
+    this.interior.build();
+    this.interior.group.visible = true;
+    this.combat.clearLock();
+    this._runCutscene(async () => {
+      await this.story.play('enter_tower');
+      this._placeOnFloor(0);
+      this.interiorFloor = 0;
+      this.combat.spawnInteriorFloor(this.interior.floorY(0), INTERIOR_GROUPS[0]);
+    });
+  }
+
+  _placeOnFloor(f) {
+    const y = this.interior.floorY(f), sp = this.interior.spawnOn(f);
+    this.player.interiorMode = true; this.player.floorY = y;
+    this.player.position.copy(sp); this.player._camPos.copy(sp);
+    this.ally.interiorMode = true; this.ally.floorY = y;
+    this.ally.position.copy(sp).add(new THREE.Vector3(2.4, 0, 0));
+  }
+
+  _interiorProgress() {
+    this.ally.floorY = this.player.floorY;   // companion rides with you
+    if (this._floorTransitioning) return;
+    const cleared = this.combat.livingCount === 0 && !(this.combat.boss && this.combat.boss.alive);
+    const f = this.interiorFloor;
+    if (!cleared) { this.hud.setObjective(`Tower · clear floor ${f + 1}`); this.hud.setPrompt(null); return; }
+    const top = this.interior.floorY(f) >= this.interior.floorY(CONFIG.world.interior.floors - 1);
+    if (top) { this.hud.setObjective('Top floor — take down President Vance!'); return; }
+    // Floor clear — step onto the escalator (near the far -z wall) to ascend
+    const zone = this.interior.escalatorZone(f);
+    const near = Math.abs(this.player.position.z - zone.z) < 3.5 && Math.abs(this.player.position.x - zone.x) < 5;
+    this.hud.setObjective('Floor clear — take the escalator up ↑');
+    this.hud.setPrompt(near ? null : 'Head to the escalator (far wall) ↑');
+    if (near) this._goUpFloor();
+  }
+
+  _goUpFloor() {
+    this._floorTransitioning = true;
+    const f = this.interiorFloor + 1;
+    const teleport = () => { this.interiorFloor = f; this._placeOnFloor(f); this.hud.log(`▲ Floor ${f + 1}`, 'crit'); };
+    if (f === 2 || f === 3) {
+      const scene = f === 2 ? 'controller_appear' : 'vance_top';
+      const which = f === 2 ? 'controller' : 'frostqueen';
+      this._runCutscene(async () => {
+        teleport();
+        this._setFocus(this.interior.bossOn(f), 'orbit');
+        await this.story.play(scene);
+        this.combat.spawnBoss(this.interior.bossOn(f), which);
+      }).then(() => { this._floorTransitioning = false; });
+    } else {
+      teleport();
+      this.combat.spawnInteriorFloor(this.interior.floorY(f), INTERIOR_GROUPS[f] || ['skeleton', 'wraith', 'wolf']);
+      this._floorTransitioning = false;
+    }
   }
 
   // ---------------------------------------------------------

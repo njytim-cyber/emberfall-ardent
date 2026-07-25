@@ -20,6 +20,10 @@ const BOSSES = {
   frostqueen: { bossId: 'frostqueen', name: 'President Vance', body: 'suit', health: 950, damage: 20, speed: 3.4, scale: 1.7,
     xp: 1400, gold: 1200, color: 0x24242e, eye: 0xff3030, attackRange: 3.6, attackCd: 1.7, isBoss: true, phaseThreshold: 0.5,
     base: 'revenant', freezeDur: 1.0 },
+  // The Unit Controller — Helix's inhuman enforcer, met partway up the tower
+  controller: { bossId: 'controller', name: 'The Unit Controller', body: 'suit', health: 720, damage: 19, speed: 4.0, scale: 1.75,
+    xp: 1000, gold: 700, color: 0x141420, eye: 0x9b30ff, attackRange: 3.6, attackCd: 1.4, isBoss: true, phaseThreshold: 0.5,
+    base: 'wraith', freezeDur: 0.9 },
 };
 
 let ENEMY_UID = 0;
@@ -52,6 +56,18 @@ export class Combat {
   }
 
   get all() { return this.boss ? [...this.enemies, this.boss] : this.enemies; }
+
+  /** Spawn a guard group on a tower floor (at floor height). */
+  spawnInteriorFloor(floorY, keys) {
+    const IN = CONFIG.world.interior;
+    keys.forEach((key, i) => {
+      const spread = (i - (keys.length - 1) / 2) * 3.6;
+      const pos = new THREE.Vector3(IN.x + spread, floorY, IN.z + (Math.random() - 0.5) * 6 - 2);
+      const e = new Enemy(this.scene, pos, key);
+      e._rewarded = false; e.group = 'interior'; e.uid = ENEMY_UID++; e.noRespawn = true;
+      this.enemies.push(e);
+    });
+  }
 
   get livingCount() { return this.enemies.filter((e) => e.alive).length; }
   get wavesDone() { return this.waveIndex >= this.waves.length; }

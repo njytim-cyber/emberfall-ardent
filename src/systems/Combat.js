@@ -19,7 +19,7 @@ const BOSSES = {
     xp: 900, gold: 800, color: 0x3a4654, eye: 0xff3344, attackRange: 3.8, attackCd: 1.7, isBoss: true, phaseThreshold: 0.5, base: 'revenant' },
   frostqueen: { bossId: 'frostqueen', name: 'President Vance', body: 'suit', health: 950, damage: 20, speed: 3.4, scale: 1.7,
     xp: 1400, gold: 1200, color: 0x24242e, eye: 0xff3030, attackRange: 3.6, attackCd: 1.7, isBoss: true, phaseThreshold: 0.5,
-    base: 'revenant', freezeDur: 1.4 },
+    base: 'revenant', freezeDur: 1.0 },
 };
 
 let ENEMY_UID = 0;
@@ -526,6 +526,24 @@ export class Combat {
   }
 
   clearLock() { this.lockTarget = null; }
+
+  // ---- Party companion's auto-attack ----
+  _nearestEnemyTo(pos, max) {
+    let best = null, bd = max;
+    for (const e of this.all) { if (!e.alive) continue; const d = e.position.distanceTo(pos); if (d < bd) { bd = d; best = e; } }
+    return best;
+  }
+
+  /** The companion fires a bolt at the nearest foe. Returns true if it fired. */
+  allyBolt(fromPos) {
+    const target = this._nearestEnemyTo(fromPos, 26);
+    if (!target) return false;
+    const origin = fromPos.clone(); origin.y = 1.4;
+    const dir = target.position.clone(); dir.y = 1.0; dir.sub(origin).normalize();
+    this.projectiles.push(new Projectile(this.scene,
+      { power: 46, element: 'thunder', speed: 36, splash: 0, type: 'magic' }, origin, dir));
+    return true;
+  }
 
   validateLock() {
     if (this.lockTarget && (!this.lockTarget.alive ||

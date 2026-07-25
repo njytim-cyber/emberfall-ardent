@@ -46,6 +46,11 @@ export class HUD {
     this.el.hud.appendChild(this.objectiveEl);
     this.objTextEl = this.objectiveEl.querySelector('.obj-text');
 
+    // Party indicator (who you control + companion)
+    this.partyEl = document.createElement('div');
+    this.partyEl.id = 'party-hud';
+    this.el.hud.appendChild(this.partyEl);
+
     // Big chapter title card (flashes in when a chapter starts)
     this.chapterCard = document.createElement('div');
     this.chapterCard.id = 'chapter-card';
@@ -225,6 +230,12 @@ export class HUD {
     if (!text) { this.objectiveEl.classList.add('hidden'); return; }
     this.objectiveEl.classList.remove('hidden');
     this.objTextEl.textContent = text;
+  }
+
+  /** Show who you're controlling and the companion (press ; to switch). */
+  setParty(activeName, otherName) {
+    this.partyEl.innerHTML =
+      `<span class="pm active">● ${activeName}</span><span class="pm-sep">;</span><span class="pm">${otherName}</span>`;
   }
 
   /** Update the persistent top-right chapter label + flash a title card. */

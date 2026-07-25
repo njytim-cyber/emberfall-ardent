@@ -61,6 +61,13 @@ export class Game {
     if (this.isMobile) this.mobile = new MobileControls(this.input);
     this.hud = new HUD(this.camera);
     this.player = new Player(this.scene, this.camera, this.town);
+    // Party companion — Aria, a ranged caster (different look + moveset). AI-follows;
+    // press ; to swap who you control.
+    this.ally = new Player(this.scene, this.camera, this.town, {
+      name: 'Aria', ai: true, tunicColor: 0x6d2f6d, hairColor: 0x5a2a12,
+      loadout: ['thunder', 'blizzard', 'holy'],
+    });
+    this.ally.position.copy(this.player.position).add(new THREE.Vector3(2.6, 0, 1.4));
     this.combat = new Combat(this.scene, this.player, this.town, this.hud);
     this.menu = new Menu();
     this.shop = new Shop();
@@ -138,6 +145,7 @@ export class Game {
     this.state = 'explore';
     this._lastChapter = 1;
     this.hud.setChapter(1, CHAPTER_NAMES[1]);
+    this.hud.setParty(this.player.name, this.ally.name);
     this.hud.setObjective(this.story.objective());
     this._lock();
   }
@@ -217,9 +225,20 @@ export class Game {
       for (let i = 0; i < QUICK_KEYS.length; i++) if (this.input.wasPressed(QUICK_KEYS[i])) this._cast(i);
     }
 
+    // Swap controlled character
+    if (this.input.wasPressed(';')) this._switchChar();
+
     this.player.update(dt, this.input);
     this.combat.update(dt);
     this.combat.validateLock();
+
+    // Party companion: follow the leader + auto-attack
+    this.ally.inCombat = this.combat.livingCount > 0;
+    this.ally.updateFollow(dt, this.player.position);
+    this.ally._allyCd -= dt;
+    if (this.ally._allyCd <= 0 && this.combat.livingCount > 0) {
+      if (this.combat.allyBolt(this.ally.position)) { this.ally._allyCd = 1.1; this.ally.triggerAttackAnim(); }
+    }
 
     // Doc's stall — always open
     this.nearbyNPC = null;
@@ -301,6 +320,16 @@ export class Game {
   }
 
   // ---------------------------------------------------------
+  /** Swap which party member you control; the other becomes the AI companion. */
+  _switchChar() {
+    const tmp = this.player; this.player = this.ally; this.ally = tmp;
+    this.player.ai = false; this.ally.ai = true;
+    this.combat.player = this.player;
+    this.player._camPos.copy(this.camera.position);   // smooth camera hand-over
+    this.hud.setParty(this.player.name, this.ally.name);
+    this.hud.log(`↔ Now controlling ${this.player.name}`, 'crit');
+  }
+
   _openMenu() { this.state = 'menu'; this._unlock(); this.hud.setPrompt(null); this.menu.open(this.player); }
 
   async _interact() {

@@ -11,10 +11,13 @@ import { CONFIG, pathCenterX } from '../data/config.js';
 import { STARTING_SPELLS } from '../data/spells.js';
 
 export class Player {
-  constructor(scene, camera, town) {
+  constructor(scene, camera, town, opts = {}) {
     this.scene = scene;
     this.camera = camera;
     this.town = town;
+    this.opts = opts;
+    this.name = opts.name || 'Cade';
+    this.ai = !!opts.ai;
     const c = CONFIG.player;
 
     // --- Stats ---
@@ -29,7 +32,8 @@ export class Player {
     this.alive = true;
 
     // --- Status effects ---
-    this.rootTimer = 0;     // > 0 => frozen in place (can't move)
+    this.rootTimer = 0;          // > 0 => frozen in place (can't move)
+    this.freezeImmuneTimer = 0;  // brief immunity so you can't be chain-frozen
 
     // --- Dash ability ---
     this.dashTimer = 0;
@@ -51,10 +55,12 @@ export class Player {
     this.damageReduction = 0; // fraction of incoming damage negated (0..1)
 
     // --- Spellbook + inventory ---
-    this.learnedSpells = [...STARTING_SPELLS];        // spell ids the hero knows
-    this.loadout = [...STARTING_SPELLS].slice(0, 3);  // equipped to keys , . /
+    const starting = opts.loadout || STARTING_SPELLS;
+    this.learnedSpells = [...new Set([...STARTING_SPELLS, ...starting])];
+    this.loadout = [...starting].slice(0, 3);          // equipped to keys , . /
     while (this.loadout.length < 3) this.loadout.push(null);
     this.inventory = { potions: 5, ethers: 3, gold: 0 };
+    this._allyCd = 0;   // ally auto-attack cooldown
 
     // --- Movement / camera state ---
     this.position = town.playerSpawn.clone();
@@ -72,10 +78,11 @@ export class Player {
   _buildMesh() {
     const g = new THREE.Group();
 
-    // --- Human materials ---
+    // --- Human materials (colours can be overridden per character) ---
+    const o = this.opts;
     const skin = new THREE.MeshStandardMaterial({ color: 0xd9a877, roughness: 0.65 });
-    const hair = new THREE.MeshStandardMaterial({ color: 0x3a2416, roughness: 0.9 });
-    const tunic = new THREE.MeshStandardMaterial({ color: 0x3f6d53, roughness: 0.85 });   // green traveller's tunic
+    const hair = new THREE.MeshStandardMaterial({ color: o.hairColor ?? 0x3a2416, roughness: 0.9 });
+    const tunic = new THREE.MeshStandardMaterial({ color: o.tunicColor ?? 0x3f6d53, roughness: 0.85 });
     const belt = new THREE.MeshStandardMaterial({ color: 0x4a3220, roughness: 0.8 });
     const pants = new THREE.MeshStandardMaterial({ color: 0x5b4636, roughness: 0.9 });
     const boot = new THREE.MeshStandardMaterial({ color: 0x2e2119, roughness: 0.85 });
@@ -239,6 +246,35 @@ export class Player {
       this.position.copy(next);
     }
 
+    this._animate(dt, moving);
+    this._updateCamera(dt);
+  }
+
+  /** AI-follow update (used when this character is the party companion). */
+  updateFollow(dt, targetPos) {
+    if (!this.alive) return;
+    if (this.rootTimer > 0) this.rootTimer -= dt;
+    const frozen = this.rootTimer > 0;
+    // Trail the leader at a comfortable distance, off to one side
+    const to = targetPos.clone().sub(this.position); to.y = 0;
+    const dist = to.length();
+    let moving = false;
+    if (!frozen && dist > 3.2) {
+      const dir = to.normalize();
+      const speed = CONFIG.player.moveSpeed * (dist > 10 ? 1.5 : 1);
+      const next = this.position.clone().addScaledVector(dir, speed * dt);
+      this._resolveCollision(next);
+      this.position.copy(next);
+      this.facing = this._lerpAngle(this.facing, Math.atan2(dir.x, dir.z), 0.2);
+      moving = true;
+    }
+    if (this.dashCd > 0) this.dashCd -= dt;
+    this._animate(dt, moving);
+  }
+
+  /** Shared per-frame regen + timers + skeletal animation. */
+  _animate(dt, moving) {
+    if (this.freezeImmuneTimer > 0) this.freezeImmuneTimer -= dt;
     // Regen
     this.mana = Math.min(this.maxMana, this.mana + CONFIG.player.manaRegen * dt);
     this.health = Math.min(this.maxHealth, this.health + CONFIG.player.healthRegen * dt);
@@ -304,8 +340,6 @@ export class Player {
     }
     if (this.heldSword) this.heldSword.visible = this.inCombat;
     if (this.backSword) this.backSword.visible = !this.inCombat;
-
-    this._updateCamera(dt);
   }
 
   /** Start the Braver leaping-slash animation, facing `angle`. */
@@ -381,8 +415,12 @@ export class Player {
     return reduced;
   }
 
-  /** Freeze the hero in place for `seconds` (EMP / cryo). */
-  applyRoot(seconds) { this.rootTimer = Math.max(this.rootTimer, seconds); }
+  /** Freeze the hero for `seconds` — but not if still immune from a recent freeze. */
+  applyRoot(seconds) {
+    if (this.freezeImmuneTimer > 0) return;
+    this.rootTimer = Math.max(this.rootTimer, seconds);
+    this.freezeImmuneTimer = seconds + 3;   // immune during the freeze + 3s after
+  }
 
   /** Evasive dodge-ROLL (i-frames) in the move direction or camera-forward. */
   dash(input) {

@@ -41,7 +41,7 @@ export const CONFIG = {
 
   // --- World: a long WINDING journey — deep forest → edge → city → plaza ---
   world: {
-    streetHalfWidth: 12,       // walkable half-width of the path/street
+    streetHalfWidth: 9,        // narrower forest-trail feel
     plazaHalfWidth: 24,        // wider open area at the boss plaza
     startZ: 300,               // spawn: deep in the Emberwood (long forest)
     forestMidZ: 150,           // deep wood → blighted edge (chapter beat)
@@ -73,5 +73,6 @@ export const CONFIG = {
 export function pathCenterX(z) {
   const w = CONFIG.world;
   const taper = Math.max(0, Math.min(1, (z - w.plazaZ - 24) / 48));
-  return (26 * Math.sin(z * 0.019) + 14 * Math.sin(z * 0.047 + 1.3)) * taper;
+  // Sharper, more frequent bends so the trail visibly turns and twists
+  return (34 * Math.sin(z * 0.032) + 20 * Math.sin(z * 0.013 + 1.0)) * taper;
 }

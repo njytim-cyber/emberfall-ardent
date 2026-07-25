@@ -45,67 +45,87 @@ export class Town {
   // ---------------------------------------------------------
   _buildGround() {
     const len = Math.abs(W.startZ - W.endZ) + 120;
-    // Forest floor everywhere (wide enough to cover the meander)
+    // Forest floor base (well below the path to avoid any z-fighting)
     const moss = new THREE.Mesh(new THREE.PlaneGeometry(360, len),
-      this._mat(0x2f4a2a, { map: getTexture('grass'), roughness: 1 }));
-    moss.rotation.x = -Math.PI / 2; moss.position.set(0, -0.03, (W.startZ + W.endZ) / 2);
+      this._mat(0x37622f, { map: getTexture('grass'), roughness: 1 }));
+    moss.rotation.x = -Math.PI / 2; moss.position.set(0, -0.08, (W.startZ + W.endZ) / 2);
     moss.receiveShadow = true; this.group.add(moss);
 
-    // Asphalt across the city half
+    // City ground patch (darker), sits between moss and path
     const cityLen = Math.abs(W.forestEndZ - W.endZ) + 40;
-    const asphalt = new THREE.Mesh(new THREE.PlaneGeometry(300, cityLen),
-      this._mat(0x23242c, { map: getTexture('cobble'), roughness: 0.7, metalness: 0.15 }));
-    asphalt.rotation.x = -Math.PI / 2; asphalt.position.set(0, -0.02, (W.forestEndZ + W.endZ) / 2);
-    asphalt.receiveShadow = true; this.group.add(asphalt);
+    const city = new THREE.Mesh(new THREE.PlaneGeometry(300, cityLen), this._mat(0x23242c, { roughness: 0.8 }));
+    city.rotation.x = -Math.PI / 2; city.position.set(0, -0.04, (W.forestEndZ + W.endZ) / 2);
+    city.receiveShadow = true; this.group.add(city);
 
-    // The winding path itself — overlapping segments that follow the centre-line
-    const pathMat = this._mat(0x59544a, { map: getTexture('cobble'), roughness: 0.9 });
-    for (let z = W.startZ; z > W.endZ; z -= 6) {
-      const seg = new THREE.Mesh(new THREE.PlaneGeometry(W.streetHalfWidth * 2 + 2, 9), pathMat);
-      seg.rotation.x = -Math.PI / 2;
-      // yaw the segment to align with the local path tangent
-      seg.rotation.z = Math.atan2(cx(z - 3) - cx(z + 3), 6);
-      seg.position.set(cx(z), -0.01, z);
-      seg.receiveShadow = true; this.group.add(seg);
+    this._buildPathRibbon();
+  }
+
+  /** One continuous winding ribbon that follows the centre-line — no overlaps. */
+  _buildPathRibbon() {
+    const half = W.streetHalfWidth + 1;
+    const pos = [], uv = [], idx = [];
+    let rows = 0;
+    for (let z = W.startZ; z >= W.endZ; z -= 5) {
+      const c = cx(z);
+      const dcx = cx(z - 1) - cx(z + 1);          // dx over dz = -2
+      const len = Math.hypot(dcx, -2);
+      const px = 2 / len, pz = dcx / len;          // perpendicular to the path
+      pos.push(c + px * half, 0, z + pz * half,  c - px * half, 0, z - pz * half);
+      uv.push(0, rows * 0.12, 1, rows * 0.12);
+      rows++;
     }
+    for (let r = 0; r < rows - 1; r++) {
+      const a = r * 2, b = r * 2 + 1, cc = (r + 1) * 2, d = (r + 1) * 2 + 1;
+      idx.push(a, b, cc, b, d, cc);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    geo.setIndex(idx); geo.computeVertexNormals();
+    const mesh = new THREE.Mesh(geo, this._mat(0x59544a, { map: getTexture('cobble'), roughness: 0.9 }));
+    mesh.position.y = 0.0; mesh.receiveShadow = true; this.group.add(mesh);
   }
 
   // ---------------------------------------------------------
   //  The Emberwood (long + winding)
   // ---------------------------------------------------------
   _buildForest() {
-    for (let z = W.startZ - 2; z > W.forestEndZ + 4; z -= 8) {
+    // Dense wall of trees — ranks packed right up to the trail edge
+    for (let z = W.startZ - 2; z > W.forestEndZ + 4; z -= 6.5) {
       const c = cx(z);
       for (const sx of [-1, 1]) {
-        for (let rank = 0; rank < 2; rank++) {
-          const x = c + sx * (W.streetHalfWidth + 3 + rank * 7 + Math.random() * 5);
-          this._tree(x, z + (Math.random() - 0.5) * 5);
+        for (let rank = 0; rank < 3; rank++) {
+          const x = c + sx * (W.streetHalfWidth + 1.5 + rank * 6 + Math.random() * 3.5);
+          this._tree(x, z + (Math.random() - 0.5) * 6, rank === 0);
         }
       }
-      const roll = Math.random(); const px = c + (Math.random() - 0.5) * W.streetHalfWidth * 1.8;
-      if (roll < 0.32) this._rock(px, z);
-      else if (roll < 0.55) this._fern(px, z);
-      else if (roll < 0.72) this._mushroom(px, z);
-      else if (roll < 0.8) this._log(px, z);
+      const roll = Math.random(); const px = c + (Math.random() - 0.5) * W.streetHalfWidth * 1.5;
+      if (roll < 0.3) this._rock(px, z);
+      else if (roll < 0.52) this._fern(px, z);
+      else if (roll < 0.66) this._mushroom(px, z);
+      else if (roll < 0.74) this._log(px, z);
     }
   }
 
-  _tree(x, z) {
+  _tree(x, z, edge) {
     const g = new THREE.Group(); g.position.set(x, 0, z);
     const glow = [0x6bff9b, 0x6be0ff, 0xb08bff][Math.floor(Math.random() * 3)];
-    const h = 7 + Math.random() * 6;
-    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.65, h, 7), this._mat(0x2e2620, { roughness: 1 }));
+    const h = 9 + Math.random() * 8;
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.75, h, 7), this._mat(0x2a221c, { roughness: 1 }));
     trunk.position.y = h / 2; trunk.castShadow = true; g.add(trunk);
+    // Big overlapping canopy — forms a leafy wall/ceiling
+    const shade = [0x24401f, 0x1c3a1c, 0x2b4a24][Math.floor(Math.random() * 3)];
     for (let i = 0; i < 3; i++) {
-      const r = (2.6 - i * 0.55) * (0.9 + Math.random() * 0.3);
-      const cl = new THREE.Mesh(new THREE.SphereGeometry(r, 9, 8),
-        this._mat(0x1f3a24, { emissive: glow, emissiveIntensity: 0.5, roughness: 0.9 }));
-      cl.position.set((Math.random() - 0.5) * 1.3, h + i * 1.3, (Math.random() - 0.5) * 1.3);
+      const r = (3.4 - i * 0.6) * (0.9 + Math.random() * 0.35);
+      const cl = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 7),
+        this._mat(shade, { emissive: glow, emissiveIntensity: 0.35, roughness: 0.95 }));
+      cl.position.set((Math.random() - 0.5) * 1.6, h + i * 1.4, (Math.random() - 0.5) * 1.6);
       cl.castShadow = true; g.add(cl);
     }
-    if (Math.random() < 0.05) { const l = new THREE.PointLight(glow, 5, 18, 2); l.position.set(0, h * 0.8, 0); g.add(l); }
+    if (Math.random() < 0.04) { const l = new THREE.PointLight(glow, 5, 18, 2); l.position.set(0, h * 0.8, 0); g.add(l); }
     this.group.add(g);
-    this.obstacles.push({ type: 'circle', x, z, r: 0.85 });
+    // Only the front rank blocks the player (keeps collisions cheap)
+    if (edge) this.obstacles.push({ type: 'circle', x, z, r: 0.9 });
   }
 
   _rock(x, z) {

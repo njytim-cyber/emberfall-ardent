@@ -9,7 +9,7 @@ export const CONFIG = {
     maxHealth: 140,
     maxMana: 100,        // this is now the ATB gauge
     manaRegen: 16,       // ATB per second (fills the gauge fast)
-    healthRegen: 1.5,    // health per second (slow)
+    healthRegen: 0.5,    // 3 HP every 6 seconds — a trickle, so you're not immortal
     moveSpeed: 7,        // units per second
     sprintMultiplier: 1.7,
     turnSpeed: 3.2,

@@ -23,7 +23,7 @@ import { Menu } from '../ui/Menu.js';
 import { Shop } from '../ui/Shop.js';
 import { MobileControls } from '../ui/MobileControls.js';
 import { SPELLS_BY_ID } from '../data/spells.js';
-import { CONFIG } from '../data/config.js';
+import { CONFIG, pathCenterX } from '../data/config.js';
 
 const QUICK_KEYS = [',', '.', '/'];
 const CHAPTER_NAMES = { 1: 'THE DEEP WOOD', 2: 'THE BLIGHTED EDGE', 3: 'THE SLUMS', 4: 'THE INNER CITY', 5: 'THE PLAZA' };
@@ -104,6 +104,14 @@ export class Game {
     this.combat.onBossPhase = (e) => { if (!e || e.bossId !== 'controller') this._runCutscene(() => this.story.bossPhaseCallback()); };
     this.combat.onBossDefeated = (e) => {
       const bossId = e && e.bossId;
+      if (bossId === 'blightwarden') {
+        // Chapter 2 boss — mourn it, then the forest's edge opens to the city.
+        return this._runCutscene(async () => {
+          this.combat.boss = null;
+          this._setFocus(this.player.position, 'orbit');
+          await this.story.onCh2BossDefeated();
+        });
+      }
       if (bossId === 'controller') {
         // Mid-tower boss — a cutscene, then keep climbing
         return this._runCutscene(async () => {
@@ -282,13 +290,27 @@ export class Game {
     const beats = [
       [z <= 250 && !f.forestOmenShown, () => this.story.reachOmen()],                                    // Ch.1 omen
       [z <= W.forestMidZ && !f.forestMidShown, () => this.story.reachForestMid()],                        // Ch.2
-      [z <= W.forestEndZ && !f.cityReached, () => this.story.reachCity()],                                // Ch.3 slums
+      [z <= W.forestEndZ && f.ch2BossDefeated && !f.cityReached, () => this.story.reachCity()],           // Ch.3 slums
       [z <= W.slumsZ && f.cityReached && !f.cityMidShown, () => this.story.reachCityMid()],
       [z <= W.avenueZ && f.cityReached && !f.avenueReached, () => this.story.reachAvenue()],              // Ch.4 inner city
       [z <= 14 && f.avenueReached && !f.preBossShown, () => this.story.reachPreBoss()],
     ];
     for (const [cond, fn] of beats) {
       if (cond) { this._setFocus(this.player.position, 'orbit'); this._runCutscene(fn); return; }
+    }
+
+    // Chapter 2 boss — the Blight Warden erupts at the forest's edge once every
+    // forest group is cleared, sealing the way to the city until it falls.
+    if (this.story.canFightCh2Boss() && z <= W.forestEndZ + 12 &&
+        this.combat.livingCount === 0 && !(this.combat.boss && this.combat.boss.alive) &&
+        this._forestWavesCleared()) {
+      const bz = W.forestEndZ + 5, pos = new THREE.Vector3(pathCenterX(bz), 0, bz);
+      this._setFocus(pos, 'orbit');
+      this._runCutscene(async () => {
+        await this.story.spawnCh2Boss();
+        this.combat.spawnBoss(pos, 'blightwarden');
+      });
+      return;
     }
 
     // Tower door — enter the command tower once the whole city is cleared
@@ -299,6 +321,13 @@ export class Game {
     }
 
     this.hud.setObjective(this.story.objective());
+  }
+
+  /** True once every forest wave has been spawned (the next queued group, if
+   *  any, belongs to the city) — the cue for the Chapter 2 boss to appear. */
+  _forestWavesCleared() {
+    const next = this.combat.waves[this.combat.waveIndex];
+    return !next || next.tag !== 'forest';
   }
 
   // ---------------------------------------------------------

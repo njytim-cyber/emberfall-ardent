@@ -44,6 +44,23 @@ export const SCENES = {
     { speaker: 'Rae', portrait: '🧑‍🚀', text: 'The corruption drives them. Put them down gently as you can and keep pushing — the tree line ends just ahead. That\'s where the wood becomes their city.' },
   ],
 
+  // The Blight Warden — climax of Chapter 2, guarding the forest's edge
+  blight_appear: [
+    { speaker: 'Narrator', portrait: '🌳', text: 'The ground heaves. The tree line itself tears loose — roots ripping free of the black soil — and rises into a towering thing of bark, thorn, and sickly green fire.', mood: 'dark' },
+    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'Cade, that\'s the Grovewarden — the eldest guardian of the whole Emberwood. It\'s stood at this boundary since before the city had a name.', mood: 'dark' },
+    { speaker: 'The Blight Warden', portrait: '🌳', text: 'N O N E … P A S S … the heart bleeds… the light dies… and the small ones with blades only bring MORE ENDING…', mood: 'boss' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Old one — it\'s me. A warden. I\'m going to the source to STOP this. You know my line. You know why I\'m here.', mood: 'hero' },
+    { speaker: 'The Blight Warden', portrait: '🌳', text: 'I know only the pain… the blight has eaten my name… if you are truly warden — then prove it, and put me DOWN.', mood: 'boss' },
+    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'It\'s too far gone to reason with, Cade. It\'s guarding the boundary out of grief. You\'ll have to break through it. Make it quick — make it clean.' },
+  ],
+
+  blight_defeat: [
+    { speaker: 'The Blight Warden', portrait: '🍂', text: 'Ahh… the fire cools… I remember now. Grovewarden. That was… my name. Thank you, small one, for reaching where the rot had buried it.', mood: 'boss' },
+    { speaker: 'Cade (You)', portrait: '🕶️', text: 'Rest, elder. I\'ll cut the drain and the wood will wake you again. I swear it on the line.', mood: 'hero' },
+    { speaker: 'The Blight Warden', portrait: '🌱', text: 'Then go… the boundary is open… the city of steel lies beyond my last root. End the one who does this. Go, warden…', mood: 'boss' },
+    { speaker: 'Rae', portrait: '🧑‍🚀', text: 'The eldest guardian just stood down for you. The forest still knows its own. The tree line ends ahead — that\'s the edge of Ardent. Push on.' },
+  ],
+
   // ================= CHAPTER 2 — The City Gate =================
   chapter2: [
     { speaker: 'Narrator', portrait: '🏙️', text: 'The trees thin, then stop — cut to raw stumps. Beyond the last of the Emberwood rises a wall of steel and cold light: the edge of ARDENT.', mood: 'dark' },

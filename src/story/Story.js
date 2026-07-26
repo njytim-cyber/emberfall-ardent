@@ -29,6 +29,8 @@ export class Story {
       kills: 0,
       forestOmenShown: false,
       forestMidShown: false,
+      ch2BossSpawned: false,
+      ch2BossDefeated: false,
       cityReached: false,
       cityMidShown: false,
       avenueReached: false,
@@ -54,6 +56,7 @@ export class Story {
     if (f.bossSpawned) return 'Ch.5 — Take down President Vance!';
     if (f.avenueReached) return `Ch.4 · Fight to the plaza · takedowns: ${f.kills}`;
     if (f.cityReached) return `Ch.3 · Breach the city gate · takedowns: ${f.kills}`;
+    if (f.ch2BossSpawned && !f.ch2BossDefeated) return 'Ch.2 — Fell the Blight Warden!';
     if (f.forestMidShown) return `Ch.2 · Cross the blighted edge · takedowns: ${f.kills}`;
     if (f.introSeen) return `Ch.1 · Push through the deep wood · takedowns: ${f.kills}`;
     return 'Wake, warden…';
@@ -73,8 +76,12 @@ export class Story {
 
   // ---- Chapter 2: the blighted edge ----
   async reachForestMid() { if (this.flags.forestMidShown) return; this.flags.forestMidShown = true; this.flags.chapter = 2; await this.play('forest_mid'); }
+  // The Blight Warden guards the forest's edge — clear it to open the way to the city.
+  canFightCh2Boss() { return this.flags.forestMidShown && !this.flags.ch2BossSpawned && !this.flags.cityReached && !this.flags.complete; }
+  async spawnCh2Boss() { if (this.flags.ch2BossSpawned) return; this.flags.ch2BossSpawned = true; await this.play('blight_appear'); }
+  async onCh2BossDefeated() { if (this.flags.ch2BossDefeated) return; this.flags.ch2BossDefeated = true; await this.play('blight_defeat'); }
 
-  // ---- Chapter 3: the city gate ----
+  // ---- Chapter 3: the city gate (only once the Blight Warden falls) ----
   async reachCity() { if (this.flags.cityReached) return; this.flags.cityReached = true; this.flags.chapter = 3; await this.play('chapter2'); }
   async reachCityMid() { if (this.flags.cityMidShown) return; this.flags.cityMidShown = true; await this.play('city_mid'); }
 

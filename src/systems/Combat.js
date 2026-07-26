@@ -24,6 +24,10 @@ const BOSSES = {
   controller: { bossId: 'controller', name: 'The Unit Controller', body: 'suit', health: 720, damage: 19, speed: 4.0, scale: 1.75,
     xp: 1000, gold: 700, color: 0x141420, eye: 0x9b30ff, attackRange: 3.6, attackCd: 1.4, isBoss: true, phaseThreshold: 0.5,
     base: 'wraith', freezeDur: 0.9 },
+  // The Blight Warden — a colossal corrupted ent guarding the forest's edge (end of Chapter 2)
+  blightwarden: { bossId: 'blightwarden', name: 'The Blight Warden', body: 'ent', health: 520, damage: 15, speed: 2.6, scale: 2.6,
+    xp: 850, gold: 600, color: 0x2c3a24, eye: 0x9bff3a, attackRange: 4.2, attackCd: 1.9, isBoss: true, phaseThreshold: 0.5,
+    base: 'ent' },
 };
 
 let ENEMY_UID = 0;
@@ -99,8 +103,10 @@ export class Combat {
     const W = CONFIG.world;
     this.player.inCombat = this.livingCount > 0 || !!(this.boss && this.boss.alive);
     if (this.boss && this.boss.alive) {
-      this.player.frontLineZ = W.endZ + 4;
-      this.player.arenaBackZ = W.plazaZ + 22;      // sealed in the plaza arena
+      // Sealed in a small arena around wherever the boss stands.
+      const bz = this.boss.position.z;
+      this.player.frontLineZ = Math.max(W.endZ + 4, bz - 5);
+      this.player.arenaBackZ = bz + 18;
     } else if (this.livingCount > 0) {
       this.player.frontLineZ = this._frontZ ?? (W.endZ + 4);
       this.player.arenaBackZ = W.startZ;

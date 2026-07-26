@@ -66,14 +66,47 @@ export class Interior {
       [I.x + rh, y + wallH / 2, I.z, 0.6, rh * 2],   // +x
       [I.x - rh, y + wallH / 2, I.z, 0.6, rh * 2],   // -x
     ];
-    walls.forEach(([x, wy, z, w, d], k) => {
-      const wall = new THREE.Mesh(new THREE.BoxGeometry(w, wallH, d), wallMat);
-      wall.position.set(x, wy, z); wall.castShadow = wall.receiveShadow = true; this.group.add(wall);
-      // window band
-      const win = new THREE.Mesh(new THREE.BoxGeometry(w * 0.85, wallH * 0.5, d * 0.85 || 0.2), glass);
-      if (d < 1) win.geometry = new THREE.BoxGeometry(0.2, wallH * 0.5, d * 0.85);
-      win.position.set(x, y + wallH * 0.55, z); this.group.add(win);
-    });
+    if (isTop) {
+      // President Vance's office: glass on every side, the grey city spread below.
+      const clearGlass = new THREE.MeshStandardMaterial({
+        color: 0x9fc6e8, emissive: 0x6f9fca, emissiveIntensity: 0.28,
+        roughness: 0.05, metalness: 0.3, transparent: true, opacity: 0.22,
+      });
+      const frameMat = this._mat(0x2a2f38, { roughness: 0.4, metalness: 0.7 });
+      walls.forEach(([x, wy, z, w, d]) => {
+        const along = Math.max(w, d);          // wall length
+        const isXwall = d > w;                  // this wall runs along z
+        // low parapet — a knee-high sill under the glass
+        const par = new THREE.Mesh(new THREE.BoxGeometry(w, 1.2, d), wallMat);
+        par.position.set(x, y + 0.6, z); par.castShadow = par.receiveShadow = true; this.group.add(par);
+        // floor-to-ceiling glass above the sill
+        const gW = isXwall ? 0.14 : along * 0.98;
+        const gD = isXwall ? along * 0.98 : 0.14;
+        const pane = new THREE.Mesh(new THREE.BoxGeometry(gW, wallH - 1.4, gD), clearGlass);
+        pane.position.set(x, y + 1.2 + (wallH - 1.4) / 2, z); this.group.add(pane);
+        // vertical mullions dividing the glass into tall panels
+        const panels = 6;
+        for (let p = 1; p < panels; p++) {
+          const t = (p / panels - 0.5) * along * 0.98;
+          const mull = new THREE.Mesh(new THREE.BoxGeometry(isXwall ? 0.18 : 0.14, wallH - 1.4, isXwall ? 0.14 : 0.18), frameMat);
+          mull.position.set(x + (isXwall ? 0 : t), y + 1.2 + (wallH - 1.4) / 2, z + (isXwall ? t : 0));
+          this.group.add(mull);
+        }
+        // top rail capping the glass
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(w, 0.3, d), frameMat);
+        rail.position.set(x, y + wallH - 0.15, z); this.group.add(rail);
+      });
+      this._buildSkyline(y);
+    } else {
+      walls.forEach(([x, wy, z, w, d], k) => {
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(w, wallH, d), wallMat);
+        wall.position.set(x, wy, z); wall.castShadow = wall.receiveShadow = true; this.group.add(wall);
+        // window band
+        const win = new THREE.Mesh(new THREE.BoxGeometry(w * 0.85, wallH * 0.5, d * 0.85 || 0.2), glass);
+        if (d < 1) win.geometry = new THREE.BoxGeometry(0.2, wallH * 0.5, d * 0.85);
+        win.position.set(x, y + wallH * 0.55, z); this.group.add(win);
+      });
+    }
 
     // Ceiling lights
     const light = new THREE.PointLight(0xcfe0ff, 6, rh * 2.4, 2);
@@ -110,5 +143,40 @@ export class Interior {
         this.group.add(rail);
       }
     }
+  }
+
+  /** The grey city, spread out far below the top-floor glass. A ring of
+   *  distant towers whose tops fall away beneath you, dotted with lit windows. */
+  _buildSkyline(topY) {
+    const litMat = new THREE.MeshStandardMaterial({ color: 0x2a2f3a, emissive: 0xffcf8a, emissiveIntensity: 0.9, roughness: 0.7 });
+    const darkMat = this._mat(0x1b2029, { roughness: 0.9, metalness: 0.2 });
+    const groundY = topY - I.floorHeight * (I.floors - 0.2);   // street level, well below
+    // A hazy ground plane so the city reads as far, far down
+    const haze = new THREE.Mesh(new THREE.CircleGeometry(260, 48),
+      new THREE.MeshStandardMaterial({ color: 0x3b4250, roughness: 1, metalness: 0 }));
+    haze.rotation.x = -Math.PI / 2; haze.position.set(I.x, groundY - 2, I.z); this.group.add(haze);
+
+    const rings = [
+      { r: 46, count: 16, hMin: 8, hMax: 20 },
+      { r: 78, count: 22, hMin: 14, hMax: 34 },
+      { r: 120, count: 26, hMin: 20, hMax: 52 },
+      { r: 175, count: 24, hMin: 26, hMax: 70 },
+    ];
+    for (const ring of rings) {
+      for (let n = 0; n < ring.count; n++) {
+        const a = (n / ring.count) * Math.PI * 2 + ring.r * 0.13;   // deterministic offset per ring
+        const jr = ring.r + ((n * 37) % 20) - 10;
+        const bx = I.x + Math.cos(a) * jr;
+        const bz = I.z + Math.sin(a) * jr;
+        const h = ring.hMin + ((n * 53) % 100) / 100 * (ring.hMax - ring.hMin);
+        const w = 5 + ((n * 29) % 6);
+        const lit = (n * 41) % 3 !== 0;
+        const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), lit ? litMat : darkMat);
+        b.position.set(bx, groundY + h / 2, bz); this.group.add(b);
+      }
+    }
+    // A dim sky glow lamp so the office isn't pitch dark against the glass
+    const sky = new THREE.PointLight(0x8fb4e0, 3, 400, 1.5);
+    sky.position.set(I.x, topY + 20, I.z); this.group.add(sky);
   }
 }

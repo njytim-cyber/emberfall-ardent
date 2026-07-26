@@ -6,13 +6,19 @@
    ============================================================ */
 
 export const WAVES = [
-  // --- Forest (outer rings) ---
-  { triggerZ: 272, z: 258, tag: 'forest', foes: ['thorn', 'wisp'] },
-  { triggerZ: 236, z: 224, tag: 'forest', foes: ['ent', 'thorn'] },
-  { triggerZ: 200, z: 188, tag: 'forest', foes: ['thorn', 'thorn', 'wisp'] },
-  { triggerZ: 164, z: 152, tag: 'forest', foes: ['ent', 'ent', 'wisp'] },
-  { triggerZ: 128, z: 116, tag: 'forest', foes: ['ent', 'wisp', 'wisp'] },
-  { triggerZ: 92, z: 80, tag: 'forest', foes: ['ent', 'thorn', 'ent', 'wisp'] },
+  // --- Chapter 1: THE DEEP WOOD (outer rings, z 300 → 170) ---
+  { triggerZ: 282, z: 268, tag: 'forest', foes: ['thorn', 'wisp'] },
+  { triggerZ: 258, z: 244, tag: 'forest', foes: ['thorn', 'thorn'] },
+  { triggerZ: 234, z: 220, tag: 'forest', foes: ['ent', 'thorn', 'wisp'] },
+  { triggerZ: 210, z: 196, tag: 'forest', foes: ['thorn', 'wisp', 'wisp'] },
+  { triggerZ: 186, z: 172, tag: 'forest', foes: ['ent', 'ent', 'thorn'] },
+
+  // --- Chapter 2: THE BLIGHTED EDGE (inner forest, z 170 → 66) ---
+  { triggerZ: 164, z: 152, tag: 'forest', foes: ['ent', 'thorn', 'wisp'] },
+  { triggerZ: 142, z: 130, tag: 'forest', foes: ['ent', 'ent', 'wisp'] },
+  { triggerZ: 120, z: 108, tag: 'forest', foes: ['thorn', 'thorn', 'ent', 'wisp'] },
+  { triggerZ: 100, z: 88, tag: 'forest', foes: ['ent', 'wisp', 'wisp', 'thorn'] },
+  { triggerZ: 84, z: 74, tag: 'forest', foes: ['ent', 'thorn', 'ent', 'wisp'] },
 
   // --- Slums / inner city (ring around the plaza) ---
   { triggerZ: 62, z: 54, tag: 'city', foes: ['goblin', 'goblin', 'wolf'] },
